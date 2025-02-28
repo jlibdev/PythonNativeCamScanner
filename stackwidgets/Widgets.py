@@ -250,6 +250,8 @@ class EditImageWidget(QWidget):
 
             # Define input points (corners of the page)
             inputPts = np.float32(page)
+        
+            print(max_height, max_width, height_left, height_right)
 
             # Define output points (corners of the output image with retained aspect ratio)
             outputPts = np.float32([[0, 0],
@@ -272,22 +274,29 @@ class EditImageWidget(QWidget):
         # Display the updated image
         self.display_image()
     
+    
     def order_corners(self, corners):
         # Reshape the corners array to (4, 2)
         corners = corners.reshape(4, 2)
 
-        # Initialize an array to store the ordered corners
+        # Find the centroid of the corners
+        centroid = np.mean(corners, axis=0)
+
+        # Calculate the angle of each corner relative to the centroid
+        def calculate_angle(point):
+            return np.arctan2(point[1] - centroid[1], point[0] - centroid[0])
+
+        # Sort the corners based on their angles
+        sorted_corners = sorted(corners, key=calculate_angle)
+
+        # Ensure the order is consistent (top-left, top-right, bottom-right, bottom-left)
+        # The sorted corners will be in clockwise or counter-clockwise order, so we need to rearrange them
+        # Here, we assume the sorted corners are in clockwise order
         ordered_corners = np.zeros((4, 2), dtype=np.float32)
-
-        # Sum the x and y coordinates to find the top-left and bottom-right corners
-        sum_coords = corners.sum(axis=1)
-        ordered_corners[0] = corners[np.argmin(sum_coords)]  # Top-left
-        ordered_corners[2] = corners[np.argmax(sum_coords)]  # Bottom-right
-
-        # Difference of x and y coordinates to find the top-right and bottom-left corners
-        diff_coords = np.diff(corners, axis=1)
-        ordered_corners[1] = corners[np.argmin(diff_coords)]  # Top-right
-        ordered_corners[3] = corners[np.argmax(diff_coords)]  # Bottom-left
+        ordered_corners[0] = sorted_corners[0]  # Top-left
+        ordered_corners[1] = sorted_corners[1]  # Top-right
+        ordered_corners[2] = sorted_corners[2]  # Bottom-right
+        ordered_corners[3] = sorted_corners[3]  # Bottom-left
 
         return ordered_corners
 
