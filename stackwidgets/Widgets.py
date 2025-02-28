@@ -5,6 +5,64 @@ from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal
 import cv2
 import numpy as np
 from utils import resource_path , get_all_pages
+import os, mimetypes
+
+def retrieve_jpg_files():
+    # Get the user's home directory
+    home_dir = os.path.expanduser("~")
+
+    # Construct paths
+    image_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "images")
+ 
+    # Create folder if it doesn’t exist
+    os.makedirs(image_camscanner_path, exist_ok=True)
+
+    # Function to check if a file is a JPEG
+    def is_jpeg(file_path):
+        mime_type, _ = mimetypes.guess_type(file_path)
+        return mime_type == "image/jpeg"
+
+    # Retrieve all JPEG files based on file type
+    jpg_files = [
+        os.path.join(image_camscanner_path, f)
+        for f in os.listdir(image_camscanner_path)
+        if is_jpeg(os.path.join(image_camscanner_path, f))
+    ]
+
+    return jpg_files
+
+def retrieve_pdf_files():
+    # Get the user's home directory
+    home_dir = os.path.expanduser("~")
+
+    # Construct paths
+    pdf_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "pdf")
+
+    # Create folder if it doesn’t exist
+    os.makedirs(pdf_camscanner_path, exist_ok=True)
+
+    def is_pdf(file_path):
+        mime_type, _ = mimetypes.guess_type(file_path)
+        return mime_type == "application/pdf"
+
+    pdf_files = [
+        os.path.join(pdf_camscanner_path, f)
+        for f in os.listdir(pdf_camscanner_path)
+        if is_pdf(os.path.join(pdf_camscanner_path, f))
+    ]
+
+    return pdf_files
+
+# Function to open a file
+def open_file(file_path):
+    if os.path.exists(file_path):
+        if os.name == 'nt':  # Windows
+            os.startfile(file_path)
+        elif os.name == 'posix':  # macOS/Linux
+            subprocess.run(["xdg-open", file_path], check=True)
+    else:
+        print("File not found:", file_path)
+
 
 class LandingWidget(QWidget):
     def __init__(self):
@@ -27,12 +85,71 @@ class LandingWidget(QWidget):
         mainlayout.addWidget(appname)
         mainlayout.addLayout(buttonsHbox)
         mainlayout.addWidget(filesteamLabel)
+     
+        # -------------- Kyr Works
+
+        imgs = retrieve_jpg_files()
+        pdfs = retrieve_pdf_files()
+
+        title_left = QLabel("Images")
+        title_left.setStyleSheet("color: black;")
+
+        title_right = QLabel("PDFs")
+        title_right.setStyleSheet("color: black;")
+
+        # sub layouts
+        subleftLayout = QVBoxLayout() 
+        subleftLayout.addWidget(title_left)
+        
+        for img in imgs:
+            btn = QPushButton(os.path.basename(img))  # Display filename
+            btn.setStyleSheet("background-color: white; color: black; border-radius: 0px; min-height: 30px;")
+            btn.clicked.connect(lambda _, path=img: open_file(path))  # Click opens the file
+            subleftLayout.addWidget(btn)
+
+        subrightLayout = QVBoxLayout() 
+        subrightLayout.addWidget(title_right)  
+
+        for pdf in pdfs:
+            btn = QPushButton(os.path.basename(pdf))
+            btn.setStyleSheet("background-color: white; color: black; border-radius: 0px; min-height: 30px;")
+            btn.clicked.connect(lambda _, path=pdf: open_file(path))
+            subrightLayout.addWidget(btn)
+
+        # Left Widget
+        subleftWidget = QWidget()
+        subleftWidget.setLayout(subleftLayout)  # Assign the layout to the widget
+        subleftWidget.setStyleSheet("background-color: lightgrey;")  # Optional color
+
+        # Right Widget (Can be used for another layout or scroll area)
+        subrightWidget = QWidget()
+        subrightWidget.setLayout(subrightLayout)  # Assign the layout to the widget
+        subrightWidget.setStyleSheet("background-color: lightgrey;")  # Just for visibility
+
+        # Parent Layout to Hold Both Widgets
+        parentLayout = QHBoxLayout()
+        parentLayout.setSpacing(10)  # To avoid margins between widgets
+        parentLayout.addWidget(subleftWidget)
+        parentLayout.addWidget(subrightWidget)
+
+        # Main Container Widget
+        subWidget = QWidget()
+        subWidget.setLayout(parentLayout)  # Set the parent layout
+        subWidget.setStyleSheet("background-color: grey;")  # Background for the main container
+
+        mainlayout.addWidget(subWidget)  # Add to main layout
+
+        # --------------------------
+
         self.setLayout(mainlayout)
-    
+        
+        
     def to_import(self):
         self.parentWidget().setCurrentIndex(1) 
+
     def to_capture(self):
         self.parentWidget().setCurrentIndex(1)
+
 
 class CaptureWidget(QWidget):
 

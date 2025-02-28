@@ -1,5 +1,5 @@
 import sys
-
+import mimetypes, os
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
 from PyQt6.QtCore import Qt
@@ -15,17 +15,19 @@ class CamScammerApp(QStackedWidget):
         self.capture_widget = CaptureWidget()
         self.edit_image_widget = EditImageWidget()
 
-
         self.addWidget(self.landingwidget)
         self.addWidget(self.capture_widget)
         self.addWidget(self.edit_image_widget)
+
 
         self.capture_widget.image_captured.connect(self.edit_image_widget.update_image)
         self.capture_widget.image_captured.connect(lambda: self.setCurrentWidget(self.edit_image_widget))
 
         self.resize(1280,720)
 
+
 def main():
+
     app = QApplication(sys.argv)
 
     font_id = QFontDatabase.addApplicationFont(resource_path("fonts/Jura-VariableFont_wght.ttf"))
