@@ -2,6 +2,7 @@ import os
 import sys
 import cv2
 import numpy as np
+from PyQt6.QtGui import QPixmap, QImage
 
 def resource_path(relative_path):
     """ Get the absolute path to a resource, compatible with PyInstaller. """
@@ -32,7 +33,7 @@ def get_all_pages(frame, pages):
     # imgThreshold = cv2.erode(imgDial, kernel, iterations=1)  # APPLY EROSION
     # closing = cv2.morphologyEx(imgThreshold, cv2.MORPH_CLOSE, kernel)
 
-    contours, _ = cv2.findContours(closing, cv2.RETR_LIST, cv2.CHAIN_APPROX_TC89_KCOS)
+    contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     sorted_contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
     MIN_AREA = 5000  
@@ -48,3 +49,12 @@ def get_all_pages(frame, pages):
         if len(approx) == 4 and cv2.isContourConvex(approx):  # Ensure it's convex
             # x, y, w, h = cv2.boundingRect(approx)
             pages.append(approx)
+
+
+def cv2_to_pixmap(cv_image):
+    """Convert OpenCV image (BGR NumPy array) to QPixmap."""
+    height, width, channel = cv_image.shape
+    bytes_per_line = channel * width
+    cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+    q_image = QImage(cv_image.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+    return QPixmap.fromImage(q_image)

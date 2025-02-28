@@ -323,22 +323,44 @@ class CaptureWidget(QWidget):
 class EditImageWidget(QWidget):
     def __init__(self):
         super().__init__()
+
         self.setWindowTitle("Image Viewer")
 
         self.warpedPages = []
-        self.home = QPushButton("Home" ,self)
-        self.home.clicked.connect(self.to_home)
-        
 
-        self.scroll_area = QScrollArea(self)
-        self.scroll_area.setWidgetResizable(True)
+        # UI ELEMENTS
 
-        self.mainlayout = QHBoxLayout()
+        # Home Button
+        homebutton = QPushButton()
+        homebutton.setIcon(QIcon(resource_path('icons/house.png')))
+        homebutton.setIconSize(QSize(30, 30))
+        homebutton.setFixedSize(50, 50)
+        homebutton.setStyleSheet("""
+            QPushButton {
+                border-radius: 25px;  
+                border: none;
+            }
+            QPushButton:hover {background-color: #ACACAC}
+        """)
+        homebutton.clicked.connect(self.to_home)
+
+        # LAYOUTS
+
+        # Navigation
+        self.navLayout = QVBoxLayout()
+        self.navLayout.addWidget(homebutton)
+        self.navLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # Image Layout
         self.imageVbox = QVBoxLayout()
+        self.imageHbox = QHBoxLayout()
+        self.imageVbox.addLayout(self.imageHbox) 
         self.image_label = QLabel(self)
+
+        # Main Layout
+        self.mainlayout = QHBoxLayout()
+        self.mainlayout.addLayout(self.navLayout)
         self.mainlayout.addLayout(self.imageVbox)
-        self.mainlayout.addWidget(self.home)
-        self.mainlayout.addWidget(self.scroll_area)
        
         self.setLayout(self.mainlayout)
     
@@ -347,6 +369,7 @@ class EditImageWidget(QWidget):
         self.parentWidget().setCurrentIndex(0)
     
     def update_image(self, pages, frame):
+        self.warpedPages.clear()
         for page in pages:
             # Ensure the page has exactly 4 points (corners)
             if len(page) != 4:
@@ -389,7 +412,7 @@ class EditImageWidget(QWidget):
             self.warpedPages.append(dst)
 
         # Display the updated image
-        self.display_image()
+        self.display_image(frame)
     
     
     def order_corners(self, corners):
@@ -418,15 +441,51 @@ class EditImageWidget(QWidget):
         return ordered_corners
 
 
-    def display_image(self):
-        cv2.imshow("", self.warpedPages[0])
-        # for warped in self.warpedPages:
-        #     warped_rgb = cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)
-        #     height, width, channels = warped_rgb.shape
-        #     bytes_per_line = channels * width
-        #     q_image = QImage(warped_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-        #     image_label = QLabel()
-        #     image_label.setPixmap(QPixmap.fromImage(q_image))
-        #     image_label.setScaledContents(True) 
-        #     self.imageVbox.addWidget(image_label)
+    def display_image(self, frame):
+        if self.warpedPages:
+            for warped in self.warpedPages:
+                warped_rgb = cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)
+                height, width, channels = warped_rgb.shape
+                bytes_per_line = channels * width
+                q_image = QImage(warped_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+                image_label = QLabel()
+                image_label.setPixmap(QPixmap.fromImage(q_image))
+                self.imageHbox.addWidget(ImageButton(image_label))
+                # self.mainlayout.addWidget(ImageButton(image_label))
+        else:
+            height, width, channels = frame.shape
+            bytes_per_line = channels * width
+            q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+            image_label = QLabel()
+            image_label.setPixmap(QPixmap.fromImage(q_image))
+            self.imageHbox.addWidget(image_label)
 
+class ImageButton(QWidget):
+    def __init__(self, cv_label):
+        super().__init__()
+        self.setFixedSize(180, 320)
+
+        layout = QVBoxLayout(self)
+
+        # QLabel with OpenCV image
+        self.label = cv_label
+        self.label.setScaledContents(True)  # Ensure the image scales properly
+
+        # QPushButton with QLabel inside
+        self.button = QPushButton(self)
+        button_layout = QVBoxLayout(self.button)
+        button_layout.addWidget(self.label)
+        button_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
+        button_layout.setSpacing(0)  # Remove spacing
+
+        # Set button size to match the QLabel size
+        self.button.setFixedSize(self.label.sizeHint())
+
+        layout.addWidget(self.button)
+
+        # Connect button click
+        self.button.clicked.connect(self.on_click)
+        
+
+    def on_click(self):
+        print("Button Clicked!")
