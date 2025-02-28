@@ -42,7 +42,6 @@ class CaptureWidget(QWidget):
         super().__init__()
 
         self.captured_frame = None
-        self.captured_pages = None
 
         self.pages = []
         mainlayout = QHBoxLayout()
@@ -83,6 +82,7 @@ class CaptureWidget(QWidget):
         #  Video Stream Label
 
         self.videoStatus = QLabel("🟢Camera Scanning")
+        self.videoStatus.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Video Stream
         self.videoLabel = QLabel(self)
@@ -135,7 +135,6 @@ class CaptureWidget(QWidget):
         if self.timer.isActive():
             self.toggle_camera()
             self.image_captured.emit(self.pages , self.captured_frame)
-            
             self.parentWidget().setCurrentIndex(2)
 
     def to_home(self):
@@ -153,24 +152,24 @@ class CaptureWidget(QWidget):
         if success:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            self.captured_frame = frame
+            self.captured_frame = frame.copy()
+
+            display_frame = frame.copy()
 
             self.pages = []
 
             # Sir Function
 
-            get_all_pages(frame, self.pages)
+            get_all_pages(display_frame, self.pages)
 
-            self.captured_pages = self.pages
-            
             for page in self.pages:
-                cv2.drawContours(frame, [page], -1, (0, 255, 0), 3) 
+                cv2.drawContours(display_frame, [page], -1, (0, 255, 0), 3) 
 
             # Sir Function
             
-            h, w, ch = frame.shape
+            h, w , ch = display_frame.shape
             bytes_per_line = ch * w
-            qimg = QImage(frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+            qimg = QImage(display_frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
 
             # Resize frame to QLabel's current size
             scaled_pixmap = QPixmap.fromImage(qimg).scaled(
@@ -192,12 +191,14 @@ class CaptureWidget(QWidget):
             self.cap.release()
             self.button.setIcon(QIcon(resource_path('icons/camera.png')))
             self.videoStatus.setText("🔴Camera Offline")
+            self.videoLabel.hide()
         else:
             self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
             self.set_camera_resolution()
             self.timer.start(30)
             self.button.setIcon(QIcon(resource_path('icons/camera-off.png')))
             self.videoStatus.setText("🟢Camera Scanning")
+            self.videoLabel.show()
 
     def closeEvent(self, event):
         self.cap.release()
@@ -222,17 +223,19 @@ class EditImageWidget(QWidget):
         self.setLayout(mainlayout)
 
     def update_image(self, pages , frame):
-    
         for page in pages:
+            _,_,h,w = cv2.boundingRect(page)
             inputPts = np.float32(page)
 
             outputPts = np.float32([[0,0],
-                        [0,800],
-                        [500,800],
-                        [500,0]])
+                        [0,h],
+                        [w,h],
+                        [w,0]])
+            
             M = cv2.getPerspectiveTransform(inputPts,outputPts)
+            dst = cv2.warpPerspective(frame, M, (w,h))
 
-            dst = cv2.warpPerspective(frame, M, (500,800))
+            dst = cv2.detailEnhance(dst, sigma_s=20, sigma_r=0.15)
 
             self.warpedPages.append(dst)
 
@@ -241,13 +244,13 @@ class EditImageWidget(QWidget):
 
     def display_image(self):
         for warped in self.warpedPages:
-            warped_rgb = cv2.cvtColor(self.warpedPages[0], cv2.COLOR_BGR2RGB)
-            height, width, channels = warped_rgb.shape
-            bytes_per_line = channels * width
-            q_image = QImage(warped_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-            image_label = QLabel()
-            image_label.setPixmap(QPixmap.fromImage(q_image))
-            image_label.setScaledContents(True) 
-            self.imageVbox(image_label)
+            cv2.imshow("",warped)
+            # warped_rgb = cv2.cvtColor(self.warpedPages[0], cv2.COLOR_BGR2RGB)
+            # height, width, channels = warped_rgb.shape
+            # bytes_per_line = channels * width
+            # q_image = QImage(warped_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+            # image_label = QLabel()
+            # image_label.setPixmap(QPixmap.fromImage(q_image))
+            # image_label.setScaledContents(True) 
+            # self.imageVbox(image_label)
 
-        
