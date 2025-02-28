@@ -1,8 +1,7 @@
 import sys
 
 from PyQt6.QtWidgets import QApplication, QStackedWidget
-from PyQt6.QtGui import QFontDatabase , QFont
-from components.bigbuttons import create_big_button
+from PyQt6.QtGui import QFontDatabase , QFont, QIcon
 from PyQt6.QtCore import Qt
 from stackwidgets.Widgets import LandingWidget , CaptureWidget, EditImageWidget
 from utils import resource_path
@@ -36,6 +35,8 @@ def main():
         app.setFont(QFont(font_family, 12))  
 
     window = CamScammerApp()
+    window.setWindowTitle("CamScammer")
+    window.setWindowIcon(QIcon(resource_path("icons/camera.png")))
     window.show()
 
     sys.exit(app.exec())

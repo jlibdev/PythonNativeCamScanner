@@ -24,7 +24,6 @@ class LandingWidget(QWidget):
 
         filesteamLabel = QLabel("Filestream")
         filesteamLabel.setStyleSheet("QLabel { font-size: 20px; padding: 10px; }")
-
         mainlayout.addWidget(appname)
         mainlayout.addLayout(buttonsHbox)
         mainlayout.addWidget(filesteamLabel)
@@ -210,47 +209,98 @@ class EditImageWidget(QWidget):
         self.setWindowTitle("Image Viewer")
 
         self.warpedPages = []
+        self.home = QPushButton("Home" ,self)
+        self.home.clicked.connect(self.to_home)
+        
 
         self.scroll_area = QScrollArea(self)
-        self.scroll_area.setWidgetResizable(True) 
+        self.scroll_area.setWidgetResizable(True)
 
-        mainlayout = QHBoxLayout()
+        self.mainlayout = QHBoxLayout()
         self.imageVbox = QVBoxLayout()
         self.image_label = QLabel(self)
-        mainlayout.addLayout(self.imageVbox)
-        mainlayout.addWidget(self.scroll_area)
+        self.mainlayout.addLayout(self.imageVbox)
+        self.mainlayout.addWidget(self.home)
+        self.mainlayout.addWidget(self.scroll_area)
        
-        self.setLayout(mainlayout)
-
-    def update_image(self, pages , frame):
+        self.setLayout(self.mainlayout)
+    
+    def to_home(self):
+        self.warpedPages = []
+        self.parentWidget().setCurrentIndex(0)
+    
+    def update_image(self, pages, frame):
         for page in pages:
-            _,_,h,w = cv2.boundingRect(page)
+            # Ensure the page has exactly 4 points (corners)
+            if len(page) != 4:
+                print("Skipping page: Expected 4 corners, found", len(page))
+                continue
+
+            # Order the corners consistently (top-left, top-right, bottom-right, bottom-left)
+            page = self.order_corners(page)  # Implement this function to order the corners
+
+            # Calculate the width and height of the ROI
+            width_top = np.linalg.norm(page[0] - page[1])  # Distance between top-left and top-right
+            width_bottom = np.linalg.norm(page[3] - page[2])  # Distance between bottom-left and bottom-right
+            max_width = max(int(width_top), int(width_bottom))
+
+            height_left = np.linalg.norm(page[0] - page[3])  # Distance between top-left and bottom-left
+            height_right = np.linalg.norm(page[1] - page[2])  # Distance between top-right and bottom-right
+            max_height = max(int(height_left), int(height_right))
+
+            # Define input points (corners of the page)
             inputPts = np.float32(page)
 
-            outputPts = np.float32([[0,0],
-                        [0,h],
-                        [w,h],
-                        [w,0]])
-            
-            M = cv2.getPerspectiveTransform(inputPts,outputPts)
-            dst = cv2.warpPerspective(frame, M, (w,h))
+            # Define output points (corners of the output image with retained aspect ratio)
+            outputPts = np.float32([[0, 0],
+                                    [max_width, 0],
+                                    [max_width, max_height],
+                                    [0, max_height]])
 
+            # Compute the perspective transformation matrix
+            M = cv2.getPerspectiveTransform(inputPts, outputPts)
+
+            # Warp the perspective of the frame
+            dst = cv2.warpPerspective(frame, M, (max_width, max_height))
+
+            # Enhance the warped image
             dst = cv2.detailEnhance(dst, sigma_s=20, sigma_r=0.15)
 
+            # Store the enhanced image
             self.warpedPages.append(dst)
 
+        # Display the updated image
         self.display_image()
+    
+    def order_corners(self, corners):
+        # Reshape the corners array to (4, 2)
+        corners = corners.reshape(4, 2)
+
+        # Initialize an array to store the ordered corners
+        ordered_corners = np.zeros((4, 2), dtype=np.float32)
+
+        # Sum the x and y coordinates to find the top-left and bottom-right corners
+        sum_coords = corners.sum(axis=1)
+        ordered_corners[0] = corners[np.argmin(sum_coords)]  # Top-left
+        ordered_corners[2] = corners[np.argmax(sum_coords)]  # Bottom-right
+
+        # Difference of x and y coordinates to find the top-right and bottom-left corners
+        diff_coords = np.diff(corners, axis=1)
+        ordered_corners[1] = corners[np.argmin(diff_coords)]  # Top-right
+        ordered_corners[3] = corners[np.argmax(diff_coords)]  # Bottom-left
+
+        return ordered_corners
 
 
     def display_image(self):
-        for warped in self.warpedPages:
-            cv2.imshow("",warped)
-            # warped_rgb = cv2.cvtColor(self.warpedPages[0], cv2.COLOR_BGR2RGB)
-            # height, width, channels = warped_rgb.shape
-            # bytes_per_line = channels * width
-            # q_image = QImage(warped_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-            # image_label = QLabel()
-            # image_label.setPixmap(QPixmap.fromImage(q_image))
-            # image_label.setScaledContents(True) 
-            # self.imageVbox(image_label)
+        cv2.imshow("", self.warpedPages[0])
+        # for warped in self.warpedPages:
+        #     warped_rgb = cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)
+        #     height, width, channels = warped_rgb.shape
+        #     bytes_per_line = channels * width
+        #     q_image = QImage(warped_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+        #     image_label = QLabel()
+        #     image_label.setPixmap(QPixmap.fromImage(q_image))
+        #     image_label.setScaledContents(True) 
+        #     self.imageVbox.addWidget(image_label)
 
