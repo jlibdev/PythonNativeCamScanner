@@ -9,7 +9,7 @@ class CamScammerApp(QStackedWidget):
     def __init__(self):
         super().__init__()
 
-        # Stackable Widgets
+        # Stackable Widgets 
         self.landingwidget = LandingWidget()
         self.capture_widget = CaptureWidget()
         self.edit_image_widget = EditImageWidget()

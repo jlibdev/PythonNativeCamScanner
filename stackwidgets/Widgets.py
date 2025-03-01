@@ -20,7 +20,7 @@ class WatcherThread(QThread):
     def run(self):
         while self.running:
             # Implement actual file-watching logic here
-            self.msleep(5000)  # Simulate delay
+            self.msleep(1000)  # Simulate delay
             self.file_signal.emit("File changed")
     
     def stop(self):
@@ -31,6 +31,8 @@ class WatcherThread(QThread):
 class LandingWidget(QWidget):
     def __init__(self):
         super().__init__()
+        self.img_buttons = {}
+        self.pdf_buttons = {}
         home_dir = os.path.expanduser("~")
         self.watch_path = os.path.join(home_dir, "Documents", "camscanner_files")
         self.init_ui()
@@ -58,8 +60,6 @@ class LandingWidget(QWidget):
 
         # -------------- Kyr Works
 
-        imgs = retrieve_img_files()
-        pdfs = retrieve_pdf_files()
 
         # Titles
         title_left = QLabel("Images")
@@ -80,15 +80,6 @@ class LandingWidget(QWidget):
         scrollAreaLayoutLeft = QVBoxLayout(scrollAreaWidgetLeft)
         scrollAreaLayoutLeft.setAlignment(Qt.AlignmentFlag.AlignTop)  # Keep content at the top
         scrollAreaLayoutLeft.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinimumSize)  # Prevent stretching
-
-        for img in imgs:
-            filename = os.path.basename(img)
-            if len(filename) > 50:
-                filename = filename[:47] + "..."  # Keep first 17 chars and add epsilon
-            btn = QPushButton(filename)
-            btn.setStyleSheet("background-color: white; color: black; border-radius: 0px; min-height: 30px;")
-            btn.clicked.connect(lambda _, path=img: open_file(path))  # Define open_file function
-            scrollAreaLayoutLeft.addWidget(btn)
 
         scrollAreaWidgetLeft.setLayout(scrollAreaLayoutLeft)
         scrollAreaLeft.setWidget(scrollAreaWidgetLeft)
@@ -157,31 +148,72 @@ class LandingWidget(QWidget):
         self.parentWidget().setCurrentIndex(1)
 
     def refresh_file_lists(self):
-        #print("🔄 Refreshing file lists...")
+        #print(" Refreshing file lists...")
         imgs = retrieve_img_files()
         pdfs = retrieve_pdf_files()
-        
-        self.clear_layout(self.scrollAreaLayoutLeft)
-        self.clear_layout(self.scrollAreaLayoutRight)
-        
-        for img in imgs:
-            filename = os.path.basename(img)
-            if len(filename) > 50:
-                filename = filename[:47] + "..."  # Keep first 17 chars and add epsilon
+
+        # Update Images List
+        existing_imgs = set(self.img_buttons.keys())
+        new_imgs = set(imgs)
+
+        # Remove old buttons
+        for old_img in existing_imgs - new_imgs:
+            btn = self.img_buttons.pop(old_img)
+            self.scrollAreaLayoutLeft.removeWidget(btn)
+            btn.deleteLater()
+
+        # Add new buttons
+        for new_img in new_imgs - existing_imgs:
+            filename = os.path.basename(new_img)
+            filename = filename[:47] + "..." if len(filename) > 50 else filename
             btn = QPushButton(filename)
-            btn.setStyleSheet("background-color: white; color: black; border-radius: 0px; min-height: 30px;")
-            btn.clicked.connect(lambda _, path=img: open_file(path))
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: white;
+                    color: black;
+                    border-radius: 0px;
+                    min-height: 30px;
+                }
+                QPushButton:hover {
+                    background-color: grey;
+                    color : white;
+                }
+            """)
+            btn.clicked.connect(lambda _, path=new_img: open_file(path))
             self.scrollAreaLayoutLeft.addWidget(btn)
-        
-        for pdf in pdfs:
-            filename = os.path.basename(pdf)
-            if len(filename) > 50:
-                filename = filename[:47] + "..."  # Keep first 17 chars and add epsilon
+            self.img_buttons[new_img] = btn  # Store button reference
+
+        # Update PDFs List
+        existing_pdfs = set(self.pdf_buttons.keys())
+        new_pdfs = set(pdfs)
+
+        # Remove old buttons
+        for old_pdf in existing_pdfs - new_pdfs:
+            btn = self.pdf_buttons.pop(old_pdf)
+            self.scrollAreaLayoutRight.removeWidget(btn)
+            btn.deleteLater()
+
+        # Add new buttons
+        for new_pdf in new_pdfs - existing_pdfs:
+            filename = os.path.basename(new_pdf)
+            filename = filename[:47] + "..." if len(filename) > 50 else filename
             btn = QPushButton(filename)
-            btn.setStyleSheet("background-color: white; color: black; border-radius: 0px; min-height: 30px;")
-            btn.clicked.connect(lambda _, path=pdf: open_file(path))
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: white;
+                    color: black;
+                    border-radius: 0px;
+                    min-height: 30px;
+                }
+                QPushButton:hover {
+                    background-color: grey;
+                    color : white;
+                }
+            """)
+            btn.clicked.connect(lambda _, path=new_pdf: open_file(path))
             self.scrollAreaLayoutRight.addWidget(btn)
-        
+            self.pdf_buttons[new_pdf] = btn  # Store button reference
+
         self.update()
 
     def clear_layout(self, layout):
