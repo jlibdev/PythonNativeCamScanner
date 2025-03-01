@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from utils import resource_path , get_all_pages
 import os, mimetypes
-
+from export_popup import ExportPopUp
 def retrieve_img_files():
     # Get the user's home directory
     home_dir = os.path.expanduser("~")
