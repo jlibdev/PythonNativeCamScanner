@@ -1,7 +1,6 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
-from PyQt6.QtCore import Qt
 from stackwidgets.Widgets import LandingWidget , CaptureWidget, EditImageWidget
 from utils import resource_path
 

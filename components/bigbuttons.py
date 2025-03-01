@@ -1,7 +1,9 @@
-from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget
-from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import QSize
+from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget , QLabel
+from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtCore import QSize, Qt
 from utils import resource_path
+import os
+
 
 
 def create_big_button(label, icon , action):
@@ -21,7 +23,7 @@ def create_big_button(label, icon , action):
     return button
 
 class ImageNavButton(QWidget):
-    def __init__(self,icon, action):
+    def __init__(self,icon, action, direction = Qt.LayoutDirection.LeftToRight):
         super().__init__()
         layout = QVBoxLayout(self)
         self.button = QPushButton(self)
@@ -35,6 +37,7 @@ class ImageNavButton(QWidget):
             }
             QPushButton:hover {background-color: #ACACAC}
         """)
+        self.button.setLayoutDirection(direction)
 
         layout.addWidget(self.button)
         self.button.clicked.connect(action)
@@ -42,35 +45,38 @@ class ImageNavButton(QWidget):
     def set_icon(self, icon):
         self.button.setIcon(QIcon(resource_path(icon)))
 
-class ImageButton(QWidget):
-    def __init__(self, cv_label):
+class ImageBtn(QWidget):
+    def __init__(self , q_image):
         super().__init__()
-        # self.setFixedSize(180, 320)
+        self.setFixedSize(180,320)
+        # self.setStyleSheet("background-color: black")
 
-        layout = QVBoxLayout(self)
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.imglabel = QLabel()
+        self.imglabel.setStyleSheet("background-color: black;border-radius: 10px;")
+        self.imglabel.setFixedSize(self.size())
+        self.imglabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # QLabel with OpenCV image
-        self.label = cv_label
-        self.label.setScaledContents(True)  # Ensure the image scales properly
+        pixmap = QPixmap.fromImage(q_image)
+        pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
 
-        # QPushButton with QLabel inside
+        self.imglabel.setPixmap(pixmap)
+
         self.button = QPushButton(self)
+        self.button.setStyleSheet("background-color: black; border-radius: 10px;")
         button_layout = QVBoxLayout(self.button)
-        button_layout.addWidget(self.label)
+        button_layout.addWidget(self.imglabel)
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         button_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
         button_layout.setSpacing(0)  # Remove spacing
+        self.button.clicked.connect(self.on_click) 
 
-        # Set button size to match the QLabel size
-        self.button.setFixedSize(self.label.sizeHint())
+        self.button.setFixedSize(self.imglabel.size())
 
         layout.addWidget(self.button)
-
-        # Connect button click
-        self.button.clicked.connect(self.on_click)
-
-        
-
+    
     def on_click(self):
-        print("Button Clicked!")
-
+        print("Clicked")
 

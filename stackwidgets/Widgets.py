@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea , QFileDialog, QMessageBox
-from components.bigbuttons import create_big_button, ImageButton , ImageNavButton
+from components.bigbuttons import create_big_button, ImageNavButton, ImageBtn
 from PyQt6.QtGui import QIcon , QImage , QPixmap
 from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal, Qt, QThread 
 import cv2
@@ -7,7 +7,6 @@ import numpy as np
 from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file
 import os
 from components.Popups import ExportPopUp
-
 
 class WatcherThread(QThread):
     file_signal = pyqtSignal(str)
@@ -233,9 +232,7 @@ class LandingWidget(QWidget):
                 img = cv2.imread(file)
                 # cv2.imshow("Image" , img)
             
-        
 class CaptureWidget(QWidget):
-
     image_captured = pyqtSignal(object , object)
     def __init__(self):
         super().__init__()
@@ -415,7 +412,7 @@ class EditImageWidget(QWidget):
         self.mainlayout = QVBoxLayout()
         self.mainlayout.addLayout(self.navLayout)
         self.mainlayout.addLayout(self.imageVbox)
-        
+
         self.setLayout(self.mainlayout)
     
     def export_dialog(self):
@@ -485,14 +482,10 @@ class EditImageWidget(QWidget):
                 height, width, channels = warped.shape
                 bytes_per_line = channels * width
                 q_image = QImage(warped.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-                image_label = QLabel()
-                image_label.setPixmap(QPixmap.fromImage(q_image))
-                self.imageHbox.addWidget(ImageButton(image_label))
+                self.imageHbox.addWidget(ImageBtn(q_image))
         else:
             height, width, channels = frame.shape
             bytes_per_line = channels * width
             q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-            image_label = QLabel()
-            image_label.setPixmap(QPixmap.fromImage(q_image))
-            self.imageHbox.addWidget(ImageButton(image_label))
+            self.imageHbox.addWidget(ImageBtn(q_image))
 
