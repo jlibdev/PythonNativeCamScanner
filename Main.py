@@ -1,5 +1,4 @@
 import sys
-import mimetypes, os
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
 from PyQt6.QtCore import Qt
@@ -10,7 +9,7 @@ class CamScammerApp(QStackedWidget):
     def __init__(self):
         super().__init__()
 
-
+        # Stackable Widgets
         self.landingwidget = LandingWidget()
         self.capture_widget = CaptureWidget()
         self.edit_image_widget = EditImageWidget()
@@ -19,7 +18,7 @@ class CamScammerApp(QStackedWidget):
         self.addWidget(self.capture_widget)
         self.addWidget(self.edit_image_widget)
 
-
+        # Signal Connections
         self.capture_widget.image_captured.connect(self.edit_image_widget.update_image)
         self.capture_widget.image_captured.connect(lambda: self.setCurrentWidget(self.edit_image_widget))
 

@@ -1,67 +1,12 @@
-from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea
-from components.bigbuttons import create_big_button
+from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea ,QDialog
+from components.bigbuttons import create_big_button, ImageButton , ImageNavButton
 from PyQt6.QtGui import QIcon , QImage , QPixmap
 from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal
 import cv2
 import numpy as np
-from utils import resource_path , get_all_pages
-import os, mimetypes
-
-def retrieve_jpg_files():
-    # Get the user's home directory
-    home_dir = os.path.expanduser("~")
-
-    # Construct paths
-    image_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "images")
- 
-    # Create folder if it doesn’t exist
-    os.makedirs(image_camscanner_path, exist_ok=True)
-
-    # Function to check if a file is a JPEG
-    def is_jpeg(file_path):
-        mime_type, _ = mimetypes.guess_type(file_path)
-        return mime_type == "image/jpeg"
-
-    # Retrieve all JPEG files based on file type
-    jpg_files = [
-        os.path.join(image_camscanner_path, f)
-        for f in os.listdir(image_camscanner_path)
-        if is_jpeg(os.path.join(image_camscanner_path, f))
-    ]
-
-    return jpg_files
-
-def retrieve_pdf_files():
-    # Get the user's home directory
-    home_dir = os.path.expanduser("~")
-
-    # Construct paths
-    pdf_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "pdf")
-
-    # Create folder if it doesn’t exist
-    os.makedirs(pdf_camscanner_path, exist_ok=True)
-
-    def is_pdf(file_path):
-        mime_type, _ = mimetypes.guess_type(file_path)
-        return mime_type == "application/pdf"
-
-    pdf_files = [
-        os.path.join(pdf_camscanner_path, f)
-        for f in os.listdir(pdf_camscanner_path)
-        if is_pdf(os.path.join(pdf_camscanner_path, f))
-    ]
-
-    return pdf_files
-
-# Function to open a file
-def open_file(file_path):
-    if os.path.exists(file_path):
-        if os.name == 'nt':  # Windows
-            os.startfile(file_path)
-        elif os.name == 'posix':  # macOS/Linux
-            subprocess.run(["xdg-open", file_path], check=True)
-    else:
-        print("File not found:", file_path)
+from utils import resource_path , get_all_pages ,  retrieve_jpg_files , retrieve_pdf_files , open_file
+import os
+from components.Popups import ExportPopUp
 
 
 class LandingWidget(QWidget):
@@ -168,18 +113,7 @@ class CaptureWidget(QWidget):
         actionsVbox = QVBoxLayout()
 
         # Home Button
-        homebutton = QPushButton()
-        homebutton.setIcon(QIcon(resource_path('icons/house.png')))
-        homebutton.setIconSize(QSize(30, 30))
-        homebutton.setFixedSize(50, 50)
-        homebutton.setStyleSheet("""
-            QPushButton {
-                border-radius: 25px;  
-                border: none;
-            }
-            QPushButton:hover {background-color: #ACACAC}
-        """)
-        homebutton.clicked.connect(self.to_home)
+        homebutton =  ImageNavButton('icons/house.png', self.to_home)
 
         # Capture Button
         capbutton = QPushButton()
@@ -194,6 +128,9 @@ class CaptureWidget(QWidget):
             QPushButton:hover {background-color: #ACACAC}
         """)
         capbutton.clicked.connect(self.capture_image)
+
+        # Camera Status Toggle
+        self.cameratogglebutton = ImageNavButton('icons/camera-off.png', self.toggle_camera)
 
         #  Video Stream Label
 
@@ -210,20 +147,6 @@ class CaptureWidget(QWidget):
         self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         self.set_camera_resolution()
 
-        # Control Button
-        self.button = QPushButton(self)
-        self.button.setIcon(QIcon(resource_path('icons/camera-off.png')))
-        self.button.setIconSize(QSize(24, 24))
-        self.button.setFixedSize(50, 50)
-        self.button.setStyleSheet("""
-            QPushButton {
-                border-radius: 25px;
-                border: none;
-            }
-            QPushButton:hover {background-color: #ACACAC}
-        """)
-        self.button.clicked.connect(self.toggle_camera)
-
         # Frame Update Timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_frame)
@@ -232,7 +155,7 @@ class CaptureWidget(QWidget):
         # Layout Setup
         navVbox.setAlignment(Qt.AlignmentFlag.AlignTop)
         navVbox.addWidget(homebutton)
-        navVbox.addWidget(self.button)
+        navVbox.addWidget(self.cameratogglebutton)
 
         videoSteamVbox.addWidget(self.videoStatus)
         videoSteamVbox.addWidget(self.videoLabel, 1)
@@ -305,14 +228,14 @@ class CaptureWidget(QWidget):
         if self.timer.isActive():
             self.timer.stop()
             self.cap.release()
-            self.button.setIcon(QIcon(resource_path('icons/camera.png')))
+            self.cameratogglebutton.set_icon('icons/camera.png')
             self.videoStatus.setText("🔴Camera Offline")
             self.videoLabel.hide()
         else:
             self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
             self.set_camera_resolution()
             self.timer.start(30)
-            self.button.setIcon(QIcon(resource_path('icons/camera-off.png')))
+            self.cameratogglebutton.set_icon('icons/camera-off.png')
             self.videoStatus.setText("🟢Camera Scanning")
             self.videoLabel.show()
 
@@ -324,31 +247,23 @@ class EditImageWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Image Viewer")
-
         self.warpedPages = []
 
         # UI ELEMENTS
 
         # Home Button
-        homebutton = QPushButton()
-        homebutton.setIcon(QIcon(resource_path('icons/house.png')))
-        homebutton.setIconSize(QSize(30, 30))
-        homebutton.setFixedSize(50, 50)
-        homebutton.setStyleSheet("""
-            QPushButton {
-                border-radius: 25px;  
-                border: none;
-            }
-            QPushButton:hover {background-color: #ACACAC}
-        """)
-        homebutton.clicked.connect(self.to_home)
+        homebutton =  ImageNavButton('icons/house.png', self.to_home)
+
+        # Export Button
+        exportbutton = ImageNavButton('icons/export.png', self.export_dialog)
 
         # LAYOUTS
 
         # Navigation
-        self.navLayout = QVBoxLayout()
+        self.navLayout = QHBoxLayout()
         self.navLayout.addWidget(homebutton)
+        self.navLayout.addStretch()
+        self.navLayout.addWidget(exportbutton)
         self.navLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # Image Layout
@@ -358,11 +273,16 @@ class EditImageWidget(QWidget):
         self.image_label = QLabel(self)
 
         # Main Layout
-        self.mainlayout = QHBoxLayout()
+        self.mainlayout = QVBoxLayout()
         self.mainlayout.addLayout(self.navLayout)
         self.mainlayout.addLayout(self.imageVbox)
+        
+        
        
         self.setLayout(self.mainlayout)
+    
+    def export_dialog(self):
+        ExportPopUp().exec()
     
     def to_home(self):
         self.warpedPages = []
@@ -451,41 +371,11 @@ class EditImageWidget(QWidget):
                 image_label = QLabel()
                 image_label.setPixmap(QPixmap.fromImage(q_image))
                 self.imageHbox.addWidget(ImageButton(image_label))
-                # self.mainlayout.addWidget(ImageButton(image_label))
         else:
             height, width, channels = frame.shape
             bytes_per_line = channels * width
             q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
             image_label = QLabel()
             image_label.setPixmap(QPixmap.fromImage(q_image))
-            self.imageHbox.addWidget(image_label)
+            self.imageHbox.addWidget(ImageButton(image_label))
 
-class ImageButton(QWidget):
-    def __init__(self, cv_label):
-        super().__init__()
-        self.setFixedSize(180, 320)
-
-        layout = QVBoxLayout(self)
-
-        # QLabel with OpenCV image
-        self.label = cv_label
-        self.label.setScaledContents(True)  # Ensure the image scales properly
-
-        # QPushButton with QLabel inside
-        self.button = QPushButton(self)
-        button_layout = QVBoxLayout(self.button)
-        button_layout.addWidget(self.label)
-        button_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
-        button_layout.setSpacing(0)  # Remove spacing
-
-        # Set button size to match the QLabel size
-        self.button.setFixedSize(self.label.sizeHint())
-
-        layout.addWidget(self.button)
-
-        # Connect button click
-        self.button.clicked.connect(self.on_click)
-        
-
-    def on_click(self):
-        print("Button Clicked!")
