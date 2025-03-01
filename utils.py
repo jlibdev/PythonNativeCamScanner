@@ -3,6 +3,10 @@ import sys
 import cv2
 import numpy as np
 from PyQt6.QtGui import QPixmap, QImage
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+import time
+from PyQt6.QtCore import QThread, pyqtSignal, QObject
 
 def resource_path(relative_path):
     """ Get the absolute path to a resource, compatible with PyInstaller. """
@@ -60,13 +64,29 @@ def cv2_to_pixmap(cv_image):
     return QPixmap.fromImage(q_image)
 
 
+
+
+
+
+
+# Function to open a file
+def open_file(file_path):
+    if os.path.exists(file_path):
+        if os.name == 'nt':  # Windows
+            os.startfile(file_path)
+        elif os.name == 'posix':  # macOS/Linux
+            subprocess.run(["xdg-open", file_path], check=True)
+    else:
+        print("File not found:", file_path)
+
+
 def retrieve_img_files():
     # Get the user's home directory
     home_dir = os.path.expanduser("~")
 
     # Construct paths
     image_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "images")
-    
+
     # Create folder if it doesn’t exist
     os.makedirs(image_camscanner_path, exist_ok=True)
 
@@ -90,7 +110,7 @@ def retrieve_pdf_files():
 
     # Construct paths
     pdf_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "pdf")
-
+    
     # Create folder if it doesn’t exist
     os.makedirs(pdf_camscanner_path, exist_ok=True)
 
@@ -115,3 +135,6 @@ def open_file(file_path):
             subprocess.run(["xdg-open", file_path], check=True)
     else:
         print("File not found:", file_path)
+
+
+

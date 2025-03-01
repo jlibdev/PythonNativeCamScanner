@@ -1,18 +1,42 @@
-from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea 
+from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea , QTextEdit
 from components.bigbuttons import create_big_button, ImageButton , ImageNavButton
 from PyQt6.QtGui import QIcon , QImage , QPixmap
-from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal
+from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal, Qt, QThread
 import cv2
 import numpy as np
-from utils import resource_path , get_all_pages , retrieve_img_files , retrieve_pdf_files , open_file
+from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file
 import os
 from components.Popups import ExportPopUp
 
 
+class WatcherThread(QThread):
+    file_signal = pyqtSignal(str)
+    
+    def __init__(self, watch_path):
+        super().__init__()
+        self.watch_path = watch_path
+        self.running = True
+    
+    def run(self):
+        while self.running:
+            # Implement actual file-watching logic here
+            self.msleep(5000)  # Simulate delay
+            self.file_signal.emit("File changed")
+    
+    def stop(self):
+        self.running = False
+        self.quit()
+        self.wait()
 
 class LandingWidget(QWidget):
     def __init__(self):
         super().__init__()
+        home_dir = os.path.expanduser("~")
+        self.watch_path = os.path.join(home_dir, "Documents", "camscanner_files")
+        self.init_ui()
+        self.start_watcher()
+
+    def init_ui(self):
 
         mainlayout = QVBoxLayout()
         mainlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -31,7 +55,7 @@ class LandingWidget(QWidget):
         mainlayout.addWidget(appname)
         mainlayout.addLayout(buttonsHbox)
         mainlayout.addWidget(filesteamLabel)
-     
+
         # -------------- Kyr Works
 
         imgs = retrieve_img_files()
@@ -43,6 +67,8 @@ class LandingWidget(QWidget):
 
         title_right = QLabel("PDFs")
         title_right.setStyleSheet("color: black; font-weight: bold; padding-left: 5px;")
+
+        
 
         # Left Layout (Images)
         subleftLayout = QVBoxLayout()
@@ -122,17 +148,60 @@ class LandingWidget(QWidget):
 
         mainlayout.addWidget(subWidget)
         # --------------------------
-
+        self.scrollAreaLayoutLeft = scrollAreaLayoutLeft  # Store layout in self
+        self.scrollAreaLayoutRight = scrollAreaLayoutRight
         self.setLayout(mainlayout)
-        
-        
+
     def to_import(self):
         self.parentWidget().setCurrentIndex(1) 
 
     def to_capture(self):
         self.parentWidget().setCurrentIndex(1)
 
+    def refresh_file_lists(self):
+        #print("🔄 Refreshing file lists...")
+        imgs = retrieve_img_files()
+        pdfs = retrieve_pdf_files()
+        
+        self.clear_layout(self.scrollAreaLayoutLeft)
+        self.clear_layout(self.scrollAreaLayoutRight)
+        
+        for img in imgs:
+            filename = os.path.basename(img)
+            if len(filename) > 50:
+                filename = filename[:47] + "..."  # Keep first 17 chars and add epsilon
+            btn = QPushButton(filename)
+            btn.setStyleSheet("background-color: white; color: black; border-radius: 0px; min-height: 30px;")
+            btn.clicked.connect(lambda _, path=img: open_file(path))
+            self.scrollAreaLayoutLeft.addWidget(btn)
+        
+        for pdf in pdfs:
+            filename = os.path.basename(pdf)
+            if len(filename) > 50:
+                filename = filename[:47] + "..."  # Keep first 17 chars and add epsilon
+            btn = QPushButton(filename)
+            btn.setStyleSheet("background-color: white; color: black; border-radius: 0px; min-height: 30px;")
+            btn.clicked.connect(lambda _, path=pdf: open_file(path))
+            self.scrollAreaLayoutRight.addWidget(btn)
+        
+        self.update()
 
+    def clear_layout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+    
+    def start_watcher(self):
+        self.watcher_thread = WatcherThread(self.watch_path)
+        self.watcher_thread.file_signal.connect(self.handle_file_change, Qt.ConnectionType.QueuedConnection)
+        self.watcher_thread.start()
+
+    def handle_file_change(self, message):
+        #print(f"📢 Received signal: {message}")
+        QTimer.singleShot(0, self.refresh_file_lists)
+
+    
 class CaptureWidget(QWidget):
 
     image_captured = pyqtSignal(object , object)
