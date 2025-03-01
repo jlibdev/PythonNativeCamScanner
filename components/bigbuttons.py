@@ -23,22 +23,20 @@ def create_big_button(label, icon , action):
     return button
 
 class ImageNavButton(QWidget):
-    def __init__(self,icon, action, direction = Qt.LayoutDirection.LeftToRight):
-        super().__init__()
-        layout = QVBoxLayout(self)
-        self.button = QPushButton(self)
-        self.button.setIcon(QIcon(resource_path(icon)))
-        self.button.setIconSize(QSize(30, 30))
-        self.button.setFixedSize(50, 50)
-        self.button.setStyleSheet("""
+    def __init__(self,icon, action, direction = Qt.LayoutDirection.LeftToRight , text = "" , stylesheet = """
             QPushButton {
                 border-radius: 25px;  
                 border: none;
             }
-            QPushButton:hover {background-color: #ACACAC}
-        """)
+            QPushButton:hover {background-color: #ACACAC}""" , iconsize = QSize(30, 30) , fixedsize = (50,50)):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        self.button = QPushButton(text)
+        self.button.setIcon(QIcon(resource_path(icon)))
+        self.button.setIconSize(iconsize)
+        self.button.setFixedSize(fixedsize[0] , fixedsize[1])
+        self.button.setStyleSheet(stylesheet)
         self.button.setLayoutDirection(direction)
-
         layout.addWidget(self.button)
         self.button.clicked.connect(action)
 

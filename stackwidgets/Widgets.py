@@ -391,7 +391,7 @@ class EditImageWidget(QWidget):
         homebutton =  ImageNavButton('icons/house.png', self.to_home)
 
         # Export Button
-        exportbutton = ImageNavButton('icons/export.png', self.export_dialog)
+        exportbutton = ImageNavButton(icon = 'icons/export.png',action = self.export_dialog, direction=Qt.LayoutDirection.RightToLeft , text = "EXPORT", fixedsize=(100,50))
 
         # LAYOUTS
 

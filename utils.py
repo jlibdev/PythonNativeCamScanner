@@ -4,8 +4,6 @@ import cv2
 import numpy as np
 from PyQt6.QtGui import QPixmap, QImage
 
-
-
 def resource_path(relative_path):
     """ Get the absolute path to a resource, compatible with PyInstaller. """
     if getattr(sys, 'frozen', False):  # Check if running as an executable

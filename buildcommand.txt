@@ -1,0 +1,1 @@
+pyinstaller --onefile --windowed --name "CamScammer" --icon=icon.ico --add-data "fonts;fonts" --add-data "icons;icons" Main.py

@@ -1,36 +1,3 @@
-# from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout, QPushButton, QFileDialog, QWidget
-# from PyQt6.QtGui import QPixmap
-# import sys
-# from PyQt6.QtCore import QUrl
-
-# class ImageEditorWidget(QWidget):
-#     def __init__(self):
-#         super().__init__()
-
-#         # Initialize Layouts
-#         self.mainlayout = QVBoxLayout()
-#         self.imageView = QVBoxLayout()
-
-#         # UI Elements
-#         self.mainImage = QLabel()
-#         self.mainImage.setPixmap(QPixmap("C:/Users/Joshua Libando/Pictures/Untitled.png"))
-#         self.mainImage.setFixedSize(400, 100)  # Set QLabel size
-#         self.mainImage.setScaledContents(True)  # Allow scaling
-
-
-
-#         self.mainlayout.addWidget(self.mainImage)
-
-#         self.setLayout(self.mainlayout)
-        
-
-# app = QApplication(sys.argv)
-# window = ImageEditorWidget()
-# window.show()
-
-# sys.exit(app.exec())
-
-
 from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout, QPushButton, QFileDialog, QWidget
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
