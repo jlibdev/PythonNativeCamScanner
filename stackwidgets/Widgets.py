@@ -109,6 +109,8 @@ class LandingWidget(QWidget):
         scrollAreaLeft.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)  # Hide Horizontal Scroll Bar
         scrollAreaWidgetLeft = QWidget()
         scrollAreaLayoutLeft = QVBoxLayout(scrollAreaWidgetLeft)
+        scrollAreaLayoutLeft.setAlignment(Qt.AlignmentFlag.AlignTop)  # Keep content at the top
+        scrollAreaLayoutLeft.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinimumSize)  # Prevent stretching
 
         for img in imgs:
             filename = os.path.basename(img)
@@ -134,6 +136,8 @@ class LandingWidget(QWidget):
         scrollAreaRight.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)  # Hide Horizontal Scroll Bar
         scrollAreaWidgetRight = QWidget()
         scrollAreaLayoutRight = QVBoxLayout(scrollAreaWidgetRight)
+        scrollAreaLayoutRight.setAlignment(Qt.AlignmentFlag.AlignTop)  # Keep content at the top
+        scrollAreaLayoutRight.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinimumSize)  # Prevent stretching
 
         for pdf in pdfs:
             filename = os.path.basename(pdf)
