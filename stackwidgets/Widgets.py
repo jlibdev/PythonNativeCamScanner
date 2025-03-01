@@ -60,7 +60,6 @@ class LandingWidget(QWidget):
 
         # -------------- Kyr Works
 
-
         # Titles
         title_left = QLabel("Images")
         title_left.setStyleSheet("color: black; font-weight: bold; padding-left: 5px;")
@@ -83,6 +82,7 @@ class LandingWidget(QWidget):
 
         scrollAreaWidgetLeft.setLayout(scrollAreaLayoutLeft)
         scrollAreaLeft.setWidget(scrollAreaWidgetLeft)
+
         subleftLayout.addWidget(scrollAreaLeft)
 
         # Right Layout (PDFs)
@@ -97,17 +97,6 @@ class LandingWidget(QWidget):
         scrollAreaLayoutRight = QVBoxLayout(scrollAreaWidgetRight)
         scrollAreaLayoutRight.setAlignment(Qt.AlignmentFlag.AlignTop)  # Keep content at the top
         scrollAreaLayoutRight.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinimumSize)  # Prevent stretching
-
-        for pdf in pdfs:
-            filename = os.path.basename(pdf)
-            if len(filename) > 50:
-                filename = filename[:47] + "..."  # Keep first 17 chars and add epsilon
-            btn = QPushButton(filename)
-            btn.setStyleSheet("""
-            QPushButton {background-color: white; color: black; border-radius: 0px; min-height: 30px;}
-""")
-            btn.clicked.connect(lambda _, path=pdf: open_file(path))
-            scrollAreaLayoutRight.addWidget(btn)
 
         scrollAreaWidgetRight.setLayout(scrollAreaLayoutRight)
         scrollAreaRight.setWidget(scrollAreaWidgetRight)
@@ -228,25 +217,20 @@ class LandingWidget(QWidget):
         self.watcher_thread.start()
 
     def handle_file_change(self, message):
-        #print(f"📢 Received signal: {message}")
         QTimer.singleShot(0, self.refresh_file_lists)
 
     def handle_import_image(self):
         file,_ = QFileDialog.getOpenFileName(self,"Select an Image", "", "Images (*.png *.jpg .*jpeg)")
         if file:
-            print("Selected Image", file)
-            img = cv2.imread(file)
-            # cv2.imshow("Image" , img)
-        else:
-            msg = QMessageBox()
-            msg.setWindowIcon(QIcon(resource_path('icons/circle-alert.png')))
-            msg.setWindowTitle("Error!")
-            msg.setText("An Error occurred while opening the file! Please try again...")
-            msg.setIcon(QMessageBox.Icon.Warning)
-            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-            msg.exec()
+            if not os.path.exists(file):  # Check if file exists
+                QMessageBox.critical(self, "Error", "The selected file does not exist!")
+                return
+            else:
+                print("Selected Image", file)
+                img = cv2.imread(file)
+                # cv2.imshow("Image" , img)
+            
         
-             
 class CaptureWidget(QWidget):
 
     image_captured = pyqtSignal(object , object)
@@ -443,72 +427,52 @@ class EditImageWidget(QWidget):
     def update_image(self, pages, frame):
         self.warpedPages.clear()
         for page in pages:
-            # Ensure the page has exactly 4 points (corners)
             if len(page) != 4:
                 print("Skipping page: Expected 4 corners, found", len(page))
                 continue
 
-            # Order the corners consistently (top-left, top-right, bottom-right, bottom-left)
-            page = self.order_corners(page)  # Implement this function to order the corners
+            page = self.order_corners(page) 
 
-            # Calculate the width and height of the ROI
-            width_top = np.linalg.norm(page[0] - page[1])  # Distance between top-left and top-right
-            width_bottom = np.linalg.norm(page[3] - page[2])  # Distance between bottom-left and bottom-right
+            width_top = np.linalg.norm(page[0] - page[1])  
+            width_bottom = np.linalg.norm(page[3] - page[2])  
             max_width = max(int(width_top), int(width_bottom))
 
-            height_left = np.linalg.norm(page[0] - page[3])  # Distance between top-left and bottom-left
-            height_right = np.linalg.norm(page[1] - page[2])  # Distance between top-right and bottom-right
+            height_left = np.linalg.norm(page[0] - page[3]) 
+            height_right = np.linalg.norm(page[1] - page[2])  
             max_height = max(int(height_left), int(height_right))
 
-            # Define input points (corners of the page)
             inputPts = np.float32(page)
-        
-            print(max_height, max_width, height_left, height_right)
-
-            # Define output points (corners of the output image with retained aspect ratio)
             outputPts = np.float32([[0, 0],
                                     [max_width, 0],
                                     [max_width, max_height],
                                     [0, max_height]])
 
-            # Compute the perspective transformation matrix
             M = cv2.getPerspectiveTransform(inputPts, outputPts)
 
-            # Warp the perspective of the frame
             dst = cv2.warpPerspective(frame, M, (max_width, max_height))
 
-            # Enhance the warped image
             dst = cv2.detailEnhance(dst, sigma_s=20, sigma_r=0.15)
 
-            # Store the enhanced image
             self.warpedPages.append(dst)
 
-        # Display the updated image
         self.display_image(frame)
     
     
     def order_corners(self, corners):
-        # Reshape the corners array to (4, 2)
         corners = corners.reshape(4, 2)
 
-        # Find the centroid of the corners
         centroid = np.mean(corners, axis=0)
 
-        # Calculate the angle of each corner relative to the centroid
         def calculate_angle(point):
             return np.arctan2(point[1] - centroid[1], point[0] - centroid[0])
 
-        # Sort the corners based on their angles
         sorted_corners = sorted(corners, key=calculate_angle)
 
-        # Ensure the order is consistent (top-left, top-right, bottom-right, bottom-left)
-        # The sorted corners will be in clockwise or counter-clockwise order, so we need to rearrange them
-        # Here, we assume the sorted corners are in clockwise order
         ordered_corners = np.zeros((4, 2), dtype=np.float32)
-        ordered_corners[0] = sorted_corners[0]  # Top-left
-        ordered_corners[1] = sorted_corners[1]  # Top-right
-        ordered_corners[2] = sorted_corners[2]  # Bottom-right
-        ordered_corners[3] = sorted_corners[3]  # Bottom-left
+        ordered_corners[0] = sorted_corners[0]  
+        ordered_corners[1] = sorted_corners[1]  
+        ordered_corners[2] = sorted_corners[2] 
+        ordered_corners[3] = sorted_corners[3] 
 
         return ordered_corners
 
