@@ -29,6 +29,8 @@ class WatcherThread(QThread):
         self.wait()
 
 class LandingWidget(QWidget):
+
+    switched = pyqtSignal()
     def __init__(self):
         super().__init__()
         self.img_buttons = {}
@@ -135,6 +137,7 @@ class LandingWidget(QWidget):
 
     def to_capture(self):
         self.parentWidget().setCurrentIndex(1)
+        self.switched.emit()
 
     def refresh_file_lists(self):
         #print(" Refreshing file lists...")
@@ -280,13 +283,11 @@ class CaptureWidget(QWidget):
         self.videoLabel.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding))
 
         # OpenCV Camera Setup
-        self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        self.set_camera_resolution()
+        self.cap = None
 
         # Frame Update Timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_frame)
-        self.timer.start(30)
 
         # Layout Setup
         navVbox.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -323,38 +324,39 @@ class CaptureWidget(QWidget):
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
     def update_frame(self):
-        success, frame = self.cap.read()
-        if success:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if self.cap:
+            success, frame = self.cap.read()
+            if success:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            self.captured_frame = frame.copy()
+                self.captured_frame = frame.copy()
 
-            display_frame = frame.copy()
+                display_frame = frame.copy()
 
-            self.pages = []
+                self.pages = []
 
-            # Sir Function
+                # Sir Function
 
-            get_all_pages(display_frame, self.pages)
+                get_all_pages(display_frame, self.pages)
 
-            for page in self.pages:
-                cv2.drawContours(display_frame, [page], -1, (0, 255, 0), 3) 
+                for page in self.pages:
+                    cv2.drawContours(display_frame, [page], -1, (0, 255, 0), 3) 
 
-            # Sir Function
-            
-            h, w , ch = display_frame.shape
-            bytes_per_line = ch * w
-            qimg = QImage(display_frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+                # Sir Function
+                
+                h, w , ch = display_frame.shape
+                bytes_per_line = ch * w
+                qimg = QImage(display_frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
 
-            # Resize frame to QLabel's current size
-            scaled_pixmap = QPixmap.fromImage(qimg).scaled(
-                self.videoLabel.width(), 
-                self.videoLabel.height(), 
-                Qt.AspectRatioMode.KeepAspectRatio, 
-                Qt.TransformationMode.SmoothTransformation
-            )
+                # Resize frame to QLabel's current size
+                scaled_pixmap = QPixmap.fromImage(qimg).scaled(
+                    self.videoLabel.width(), 
+                    self.videoLabel.height(), 
+                    Qt.AspectRatioMode.KeepAspectRatio, 
+                    Qt.TransformationMode.SmoothTransformation
+                )
 
-            self.videoLabel.setPixmap(scaled_pixmap)
+                self.videoLabel.setPixmap(scaled_pixmap)
 
     def resizeEvent(self, event):
         self.update_frame()
@@ -369,6 +371,7 @@ class CaptureWidget(QWidget):
             self.videoLabel.hide()
         else:
             self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            self.set_camera_resolution()
             self.set_camera_resolution()
             self.timer.start(30)
             self.cameratogglebutton.set_icon('icons/camera-off.png')
@@ -413,8 +416,6 @@ class EditImageWidget(QWidget):
         self.mainlayout.addLayout(self.navLayout)
         self.mainlayout.addLayout(self.imageVbox)
         
-        
-       
         self.setLayout(self.mainlayout)
     
     def export_dialog(self):
@@ -480,10 +481,10 @@ class EditImageWidget(QWidget):
     def display_image(self, frame):
         if self.warpedPages:
             for warped in self.warpedPages:
-                warped_rgb = cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)
-                height, width, channels = warped_rgb.shape
+                # warped_rgb = cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)
+                height, width, channels = warped.shape
                 bytes_per_line = channels * width
-                q_image = QImage(warped_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+                q_image = QImage(warped.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
                 image_label = QLabel()
                 image_label.setPixmap(QPixmap.fromImage(q_image))
                 self.imageHbox.addWidget(ImageButton(image_label))

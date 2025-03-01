@@ -20,6 +20,7 @@ class CamScammerApp(QStackedWidget):
 
         # Signal Connections
         self.capture_widget.image_captured.connect(self.edit_image_widget.update_image)
+        self.landingwidget.switched.connect(self.capture_widget.toggle_camera)
         self.capture_widget.image_captured.connect(lambda: self.setCurrentWidget(self.edit_image_widget))
 
         self.resize(1280,720)

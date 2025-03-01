@@ -45,7 +45,7 @@ class ImageNavButton(QWidget):
 class ImageButton(QWidget):
     def __init__(self, cv_label):
         super().__init__()
-        self.setFixedSize(180, 320)
+        # self.setFixedSize(180, 320)
 
         layout = QVBoxLayout(self)
 

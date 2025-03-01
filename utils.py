@@ -54,20 +54,12 @@ def get_all_pages(frame, pages):
 
 
 def cv2_to_pixmap(cv_image):
-    """Convert OpenCV image (BGR NumPy array) to QPixmap."""
     height, width, channel = cv_image.shape
     bytes_per_line = channel * width
     cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
     q_image = QImage(cv_image.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
     return QPixmap.fromImage(q_image)
 
-
-
-
-
-
-
-# Function to open a file
 def open_file(file_path):
     if os.path.exists(file_path):
         if os.name == 'nt':  # Windows
@@ -76,7 +68,6 @@ def open_file(file_path):
             subprocess.run(["xdg-open", file_path], check=True)
     else:
         print("File not found:", file_path)
-
 
 def retrieve_img_files():
     # Get the user's home directory
@@ -124,7 +115,6 @@ def retrieve_pdf_files():
 
     return pdf_files
 
-# Function to open a file
 def open_file(file_path):
     if os.path.exists(file_path):
         if os.name == 'nt':  # Windows
