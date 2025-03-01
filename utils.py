@@ -3,10 +3,8 @@ import sys
 import cv2
 import numpy as np
 from PyQt6.QtGui import QPixmap, QImage
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-import time
-from PyQt6.QtCore import QThread, pyqtSignal, QObject
+
+
 
 def resource_path(relative_path):
     """ Get the absolute path to a resource, compatible with PyInstaller. """
