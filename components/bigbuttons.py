@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget , QLabel
+from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget , QLabel, QScrollArea
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import QSize, Qt
 from utils import resource_path
@@ -44,11 +44,9 @@ class ImageNavButton(QWidget):
         self.button.setIcon(QIcon(resource_path(icon)))
 
 class ImageBtn(QWidget):
-    def __init__(self , q_image):
+    def __init__(self , q_image,parent):
         super().__init__()
-        self.setFixedSize(180,320)
-        # self.setStyleSheet("background-color: black")
-
+        self.setFixedSize(50,76)
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
@@ -69,7 +67,7 @@ class ImageBtn(QWidget):
         button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         button_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
         button_layout.setSpacing(0)  # Remove spacing
-        self.button.clicked.connect(self.on_click) 
+        self.button.clicked.connect(self.on_click)
 
         self.button.setFixedSize(self.imglabel.size())
 

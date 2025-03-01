@@ -7,6 +7,7 @@ import numpy as np
 from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file
 import os
 from components.Popups import ExportPopUp
+from components.Scrollers import imageSrollerV
 
 class WatcherThread(QThread):
     file_signal = pyqtSignal(str)
@@ -394,24 +395,44 @@ class EditImageWidget(QWidget):
         exportbutton = ImageNavButton(icon = 'icons/export.png',action = self.export_dialog, direction=Qt.LayoutDirection.RightToLeft , text = "EXPORT", fixedsize=(100,50))
 
         # LAYOUTS
+        self.mainlayout = QVBoxLayout()
+        self.navLayout = QHBoxLayout()
+        self.imagePreviewContainer = QHBoxLayout()
+        self.imageListContainer = QScrollArea()
+        self.imageScroller = imageSrollerV()
+        self.imageListContainer.setWidget(self.imageScroller)
+        self.filtersHBoxContainer = QHBoxLayout()
+
+
+        # Styles
+
+        #  Image List Container
+        self.imageListContainer.setFixedWidth(70)
+        self.imageListContainer.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.imageListContainer.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.imageListContainer.horizontalScrollBar().setFixedSize(0,0)
+        self.imageListContainer.verticalScrollBar().setFixedSize(0,0)
+
 
         # Navigation
-        self.navLayout = QHBoxLayout()
         self.navLayout.addWidget(homebutton)
         self.navLayout.addStretch()
         self.navLayout.addWidget(exportbutton)
         self.navLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        # Image Layout
-        self.imageVbox = QVBoxLayout()
-        self.imageHbox = QHBoxLayout()
-        self.imageVbox.addLayout(self.imageHbox) 
-        self.image_label = QLabel(self)
+        # Image Preview Container
+        self.imagePreviewContainer.addWidget(self.imageListContainer)
+        self.previewImage = QLabel("Prev")
+        self.previewImage.setStyleSheet("background-color: #D9D9D9")
+        self.previewImage.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.imagePreviewContainer.addWidget(self.previewImage)
 
         # Main Layout
-        self.mainlayout = QVBoxLayout()
+        
         self.mainlayout.addLayout(self.navLayout)
-        self.mainlayout.addLayout(self.imageVbox)
+        self.mainlayout.addLayout(self.imagePreviewContainer)
+        self.mainlayout.addLayout(self.filtersHBoxContainer)
+        self.mainlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.setLayout(self.mainlayout)
     
@@ -482,10 +503,10 @@ class EditImageWidget(QWidget):
                 height, width, channels = warped.shape
                 bytes_per_line = channels * width
                 q_image = QImage(warped.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-                self.imageHbox.addWidget(ImageBtn(q_image))
+                self.imageScroller.add_item(ImageBtn(q_image, self.imageListContainer))
         else:
             height, width, channels = frame.shape
             bytes_per_line = channels * width
             q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-            self.imageHbox.addWidget(ImageBtn(q_image))
+            self.imageScroller.add_item(ImageBtn(q_image, self.imageListContainer))
 
