@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget , QLabel, QScrollA
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import QSize, Qt
 from utils import resource_path
-import os
+import cv2
 
 
 
@@ -44,18 +44,19 @@ class ImageNavButton(QWidget):
         self.button.setIcon(QIcon(resource_path(icon)))
 
 class ImageBtn(QWidget):
-    def __init__(self , q_image,parent):
+    def __init__(self , q_image, btn_action):
         super().__init__()
         self.setFixedSize(50,76)
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
+        self.image = q_image
         self.imglabel = QLabel()
         self.imglabel.setStyleSheet("background-color: black;border-radius: 10px;")
         self.imglabel.setFixedSize(self.size())
         self.imglabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        pixmap = QPixmap.fromImage(q_image)
+        pixmap = QPixmap.fromImage(self.image)
         pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
 
         self.imglabel.setPixmap(pixmap)
@@ -67,12 +68,12 @@ class ImageBtn(QWidget):
         button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         button_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
         button_layout.setSpacing(0)  # Remove spacing
-        self.button.clicked.connect(self.on_click)
+        self.button.clicked.connect(lambda: self.on_click(btn_action))
 
         self.button.setFixedSize(self.imglabel.size())
 
         layout.addWidget(self.button)
     
-    def on_click(self):
-        print("Clicked")
+    def on_click(self, btn):
+        btn()
 

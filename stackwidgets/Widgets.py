@@ -422,8 +422,10 @@ class EditImageWidget(QWidget):
 
         # Image Preview Container
         self.imagePreviewContainer.addWidget(self.imageListContainer)
-        self.previewImage = QLabel("Prev")
-        self.previewImage.setStyleSheet("background-color: #D9D9D9")
+        self.previewImage = QLabel()
+        self.previewImage.setPixmap(QPixmap(resource_path('icons/noimage.png')))
+        self.previewImage.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # self.previewImage.setStyleSheet("background-color: #D9D9D9")
         self.previewImage.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.imagePreviewContainer.addWidget(self.previewImage)
 
@@ -499,14 +501,18 @@ class EditImageWidget(QWidget):
     def display_image(self, frame):
         if self.warpedPages:
             for warped in self.warpedPages:
-                # warped_rgb = cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)
                 height, width, channels = warped.shape
                 bytes_per_line = channels * width
                 q_image = QImage(warped.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-                self.imageScroller.add_item(ImageBtn(q_image, self.imageListContainer))
+                self.imageScroller.add_item(ImageBtn(q_image,self.set_preview))
         else:
+            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+            self.warpedPages.append(frame)
             height, width, channels = frame.shape
             bytes_per_line = channels * width
             q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-            self.imageScroller.add_item(ImageBtn(q_image, self.imageListContainer))
+            self.imageScroller.add_item(ImageBtn(q_image,self.set_preview))
+
+    def set_preview(self):
+        cv2.imshow("" , self.warpedPages[0])
 
