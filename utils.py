@@ -60,29 +60,29 @@ def cv2_to_pixmap(cv_image):
     return QPixmap.fromImage(q_image)
 
 
-def retrieve_jpg_files():
+def retrieve_img_files():
     # Get the user's home directory
     home_dir = os.path.expanduser("~")
 
     # Construct paths
     image_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "images")
- 
+    
     # Create folder if it doesn’t exist
     os.makedirs(image_camscanner_path, exist_ok=True)
 
-    # Function to check if a file is a JPEG
-    def is_jpeg(file_path):
+    # Function to check if a file is a JPEG or PNG
+    def is_image(file_path):
         mime_type, _ = mimetypes.guess_type(file_path)
-        return mime_type == "image/jpeg"
+        return mime_type in ["image/jpeg", "image/png"]
 
-    # Retrieve all JPEG files based on file type
-    jpg_files = [
+    # Retrieve all JPEG and PNG files
+    img_files = [
         os.path.join(image_camscanner_path, f)
         for f in os.listdir(image_camscanner_path)
-        if is_jpeg(os.path.join(image_camscanner_path, f))
+        if is_image(os.path.join(image_camscanner_path, f))
     ]
 
-    return jpg_files
+    return img_files 
 
 def retrieve_pdf_files():
     # Get the user's home directory
@@ -115,6 +115,3 @@ def open_file(file_path):
             subprocess.run(["xdg-open", file_path], check=True)
     else:
         print("File not found:", file_path)
-
-
-

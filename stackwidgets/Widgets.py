@@ -1,67 +1,13 @@
-from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea ,QDialog
+from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea 
 from components.bigbuttons import create_big_button, ImageButton , ImageNavButton
 from PyQt6.QtGui import QIcon , QImage , QPixmap
 from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal
 import cv2
 import numpy as np
-from utils import resource_path , get_all_pages
-import os, mimetypes
+from utils import resource_path , get_all_pages , retrieve_img_files , retrieve_pdf_files , open_file
+import os
+from components.Popups import ExportPopUp
 
-def retrieve_img_files():
-    # Get the user's home directory
-    home_dir = os.path.expanduser("~")
-
-    # Construct paths
-    image_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "images")
-    
-    # Create folder if it doesn’t exist
-    os.makedirs(image_camscanner_path, exist_ok=True)
-
-    # Function to check if a file is a JPEG or PNG
-    def is_image(file_path):
-        mime_type, _ = mimetypes.guess_type(file_path)
-        return mime_type in ["image/jpeg", "image/png"]
-
-    # Retrieve all JPEG and PNG files
-    img_files = [
-        os.path.join(image_camscanner_path, f)
-        for f in os.listdir(image_camscanner_path)
-        if is_image(os.path.join(image_camscanner_path, f))
-    ]
-
-    return img_files 
-
-def retrieve_pdf_files():
-    # Get the user's home directory
-    home_dir = os.path.expanduser("~")
-
-    # Construct paths
-    pdf_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "pdf")
-
-    # Create folder if it doesn’t exist
-    os.makedirs(pdf_camscanner_path, exist_ok=True)
-
-    def is_pdf(file_path):
-        mime_type, _ = mimetypes.guess_type(file_path)
-        return mime_type == "application/pdf"
-
-    pdf_files = [
-        os.path.join(pdf_camscanner_path, f)
-        for f in os.listdir(pdf_camscanner_path)
-        if is_pdf(os.path.join(pdf_camscanner_path, f))
-    ]
-
-    return pdf_files
-
-# Function to open a file
-def open_file(file_path):
-    if os.path.exists(file_path):
-        if os.name == 'nt':  # Windows
-            os.startfile(file_path)
-        elif os.name == 'posix':  # macOS/Linux
-            subprocess.run(["xdg-open", file_path], check=True)
-    else:
-        print("File not found:", file_path)
 
 
 class LandingWidget(QWidget):
