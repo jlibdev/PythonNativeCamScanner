@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea , QTextEdit
+from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea , QFileDialog, QMessageBox
 from components.bigbuttons import create_big_button, ImageButton , ImageNavButton
 from PyQt6.QtGui import QIcon , QImage , QPixmap
-from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal, Qt, QThread
+from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal, Qt, QThread 
 import cv2
 import numpy as np
 from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file
@@ -47,7 +47,7 @@ class LandingWidget(QWidget):
         appname.setStyleSheet("QLabel { font-size: 70px; }")
 
         buttonsHbox = QHBoxLayout()
-        buttonsHbox.addWidget(create_big_button("IMPORT IMAGE FROM LOCAL FILE" , resource_path('icons/folderdown.png') , self.to_import))
+        buttonsHbox.addWidget(create_big_button("IMPORT IMAGE FROM LOCAL FILE" , resource_path('icons/folderdown.png') , self.handle_import_image))
         buttonsHbox.addWidget(create_big_button("CAPTURE IMAGE FROM CAMERA" , resource_path('icons/camera.png') , self.to_capture))
 
         filesteamLabel = QLabel("Filestream")
@@ -68,12 +68,9 @@ class LandingWidget(QWidget):
         title_right = QLabel("PDFs")
         title_right.setStyleSheet("color: black; font-weight: bold; padding-left: 5px;")
 
-        
-
         # Left Layout (Images)
         subleftLayout = QVBoxLayout()
         subleftLayout.addWidget(title_left)
-
             
         scrollAreaLeft = QScrollArea()
         scrollAreaLeft.setWidgetResizable(True)
@@ -95,7 +92,6 @@ class LandingWidget(QWidget):
 
         scrollAreaWidgetLeft.setLayout(scrollAreaLayoutLeft)
         scrollAreaLeft.setWidget(scrollAreaWidgetLeft)
-
         subleftLayout.addWidget(scrollAreaLeft)
 
         # Right Layout (PDFs)
@@ -116,7 +112,9 @@ class LandingWidget(QWidget):
             if len(filename) > 50:
                 filename = filename[:47] + "..."  # Keep first 17 chars and add epsilon
             btn = QPushButton(filename)
-            btn.setStyleSheet("background-color: white; color: black; border-radius: 0px; min-height: 30px;")
+            btn.setStyleSheet("""
+            QPushButton {background-color: white; color: black; border-radius: 0px; min-height: 30px;}
+""")
             btn.clicked.connect(lambda _, path=pdf: open_file(path))
             scrollAreaLayoutRight.addWidget(btn)
 
@@ -201,7 +199,22 @@ class LandingWidget(QWidget):
         #print(f"📢 Received signal: {message}")
         QTimer.singleShot(0, self.refresh_file_lists)
 
-    
+    def handle_import_image(self):
+        file,_ = QFileDialog.getOpenFileName(self,"Select an Image", "", "Images (*.png *.jpg .*jpeg)")
+        if file:
+            print("Selected Image", file)
+            img = cv2.imread(file)
+            # cv2.imshow("Image" , img)
+        else:
+            msg = QMessageBox()
+            msg.setWindowIcon(QIcon(resource_path('icons/circle-alert.png')))
+            msg.setWindowTitle("Error!")
+            msg.setText("An Error occurred while opening the file! Please try again...")
+            msg.setIcon(QMessageBox.Icon.Warning)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+            msg.exec()
+        
+             
 class CaptureWidget(QWidget):
 
     image_captured = pyqtSignal(object , object)
@@ -234,6 +247,7 @@ class CaptureWidget(QWidget):
             QPushButton:hover {background-color: #ACACAC}
         """)
         capbutton.clicked.connect(self.capture_image)
+        capbutton.setShortcut("c")
 
         # Camera Status Toggle
         self.cameratogglebutton = ImageNavButton('icons/camera-off.png', self.toggle_camera)
