@@ -4,7 +4,7 @@ from PyQt6.QtGui import QIcon , QImage , QPixmap
 from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal, Qt, QThread 
 import cv2
 import numpy as np
-from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file , clear_widget , export_to_pdf, export_to_img
+from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file , clear_widget 
 import os
 from components.Popups import ExportPopUp
 from components.Scrollers import imageSrollerV
@@ -452,10 +452,7 @@ class EditImageWidget(QWidget):
     
     def export_dialog(self):
         valid_list = self.imageScroller.children()[1:]
-        export_to_pdf(valid_list)
-        export_to_img(valid_list)
-        
-        ExportPopUp().exec()
+        ExportPopUp(valid_list).exec()
     
     def to_capture(self):
         self.parentWidget().setCurrentIndex(1)

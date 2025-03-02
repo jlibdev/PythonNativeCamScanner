@@ -169,18 +169,46 @@ def save_to_image(widget):
     for child in widget:
         print(child) 
 
-def export_to_pdf(image_list, output_pdf=f"CamScam-{date.today()}-{str(uuid.uuid4())}.pdf"):
+def export_to_pdf(image_list, output_pdf=os.path.join(os.path.expanduser("~"), "Documents", "camscanner_files", "pdf" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.pdf")):
    if image_list:
         c = canvas.Canvas(output_pdf, pagesize=letter)
-        pdf_width, pdf_height = letter 
+        pdf_width, pdf_height = letter
 
-        for img in image_list:
-            img = img.cv_image
+        # for img in image_list:
+        #     img = img.cv_image
+        #     pil_img = Image.fromarray(img)
+        #     pil_img.save("temp.jpg") 
+
+        #     orig_width, orig_height = pil_img.size
+
+        #     new_width = pdf_width
+        #     new_height = (orig_height / orig_width) * new_width 
+
+        #     if new_height > pdf_height:
+        #         new_height = pdf_height
+        #         new_width = (orig_width / orig_height) * new_height 
+
+        #     y_position = (pdf_height - new_height) / 2  
+        #     x_position = (pdf_width - new_width) / 2
+
+        #     c.drawImage("temp.jpg", x_position, y_position, width=new_width, height=new_height)
+        #     c.showPage()  # Create new page
+
+        # c.save()
+        # print(f"PDF saved as {output_pdf}")
+
+        for idx, img in enumerate(image_list):
+            img = img.cv_image  # Convert to OpenCV format if necessary
             pil_img = Image.fromarray(img)
-            pil_img.save("temp.jpg") 
 
+            # Generate a unique filename
+            temp_filename = f"temp_{idx}.jpg"
+            pil_img.save(temp_filename)
+
+            # Get original dimensions
             orig_width, orig_height = pil_img.size
 
+            # Calculate new dimensions
             new_width = pdf_width
             new_height = (orig_height / orig_width) * new_width 
 
@@ -188,17 +216,21 @@ def export_to_pdf(image_list, output_pdf=f"CamScam-{date.today()}-{str(uuid.uuid
                 new_height = pdf_height
                 new_width = (orig_width / orig_height) * new_height 
 
+            # Calculate position to center the image
             y_position = (pdf_height - new_height) / 2  
             x_position = (pdf_width - new_width) / 2
 
-            c.drawImage("temp.jpg", x_position, y_position, width=new_width, height=new_height)
-            c.showPage()  # Create new page
+            # Draw image onto the PDF
+            c.drawImage(temp_filename, x_position, y_position, width=new_width, height=new_height)
+            c.showPage()  # Create new page for next image
+
+            # Optional: Clean up temp file
+            os.remove(temp_filename)
 
         c.save()
-        print(f"PDF saved as {output_pdf}")
 
 def export_to_img(image_list, img_type="png"):
     for i in range(len(image_list)):
             img = cv2.cvtColor(image_list[i].cv_img_orig,cv2.COLOR_BGR2RGB)
-            cv2.imwrite(f"CamScam-{date.today()}-{str(uuid.uuid4())}.{img_type}", img)
-            print(f"image saved")
+            cv2.imwrite(os.path.join(os.path.expanduser("~"), "Documents", "camscanner_files", "images" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.{img_type}") , img)
+            print(f"image saved on ",os.path.join(os.path.expanduser("~"), "Documents", "camscanner_files", "images" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.{img_type}") )
