@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget , QLabel, QScrollArea
-from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QIcon, QPixmap , QImage
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from utils import resource_path, cv2_to_QImage
 import cv2
 
@@ -44,6 +44,7 @@ class ImageNavButton(QWidget):
         self.button.setIcon(QIcon(resource_path(icon)))
 
 class ImageBtn(QWidget):
+    on_image_changed = pyqtSignal()
     def __init__(self , cv_img, btn_action ):
         super().__init__()
         self.setFixedSize(50,76)
@@ -86,37 +87,30 @@ class ImageBtn(QWidget):
 
     def apply_filter(self, filter):
         match filter:
-            case 1:
-                pass
-            case 2:
-                pass
+            case "Gray":
+                self.cv_image = cv2.cvtColor(self.cv_image , cv2.COLOR_BGR2RGB)
+                self.cv_image = cv2.cvtColor(self.cv_image , cv2.COLOR_RGB2GRAY)
+                self.q_image = cv2_to_QImage(self.cv_image)
+            case "Original":
+                self.cv_image = self.cv_img_orig
+                self.q_image = cv2_to_QImage(self.cv_image)
             case 3:
                 pass
             case 4:
                 pass
             case _:
                 pass
-    
-    def apply_imgActn(self , type):
-        match type:
-            case 1:
-                pass
-            case 2:
-                pass
-            case 3:
-                pass
-            case 4:
-                pass
-            case _:
-                pass
-
-    def update_image(self , newImg):
-        pass
+        pixmap = QPixmap.fromImage(self.q_image)
+        pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        self.imglabel.setPixmap(pixmap)
+        self.on_image_changed.emit()
 
         
 class ActionsBtn(QWidget):
     def __init__(self, action_name):
         super().__init__()
+        self.action_name = action_name
+        self.selected = None
         self.setFixedSize(80, 80)
         self.setStyleSheet("background-color: gray;")
 
@@ -133,7 +127,12 @@ class ActionsBtn(QWidget):
         self.btn.clicked.connect(self.action)
 
     def action(self):
-        print("Action triggered")
+        print(self.selected)
+        if self.selected:
+            self.selected.apply_filter(self.action_name)
+    def set_selected(self , selected):
+        self.selected = selected
+
 
 
 

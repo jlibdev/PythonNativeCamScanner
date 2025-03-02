@@ -145,13 +145,15 @@ def open_file(file_path):
         print("File not found:", file_path)
 
 
-def cv2_to_QImage(frame):
-    height, width, channels = frame.shape
-    bytes_per_line = channels * width
-    q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-
-    return q_image
-
+def cv2_to_QImage(frame, format_type=QImage.Format.Format_RGB888):
+    if len(frame.shape) == 2:  # Grayscale image (2D array)
+        height, width = frame.shape
+        bytes_per_line = width
+        return QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_Grayscale8)
+    else:  # Color image (3D array)
+        height, width, channels = frame.shape
+        bytes_per_line = channels * width
+        return QImage(frame.data, width, height, bytes_per_line, format_type)
 
 def clear_widget(widget):
     children = widget.findChildren(QWidget)

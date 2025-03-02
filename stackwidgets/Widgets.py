@@ -432,9 +432,10 @@ class EditImageWidget(QWidget):
         self.previewImage.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.imagePreviewContainer.addWidget(self.previewImage)
 
+        
 
         # Filters Container
-        self.filtersContainer = FiltersLayout(self.selected)
+        self.filtersContainer = FiltersLayout()
 
         # Main Layout
         
@@ -490,7 +491,6 @@ class EditImageWidget(QWidget):
 
         self.display_image(frame)
     
-    
     def order_corners(self, corners):
         corners = corners.reshape(4, 2)
 
@@ -509,19 +509,31 @@ class EditImageWidget(QWidget):
 
         return ordered_corners
 
-
     def display_image(self, frame):
         if self.warpedPages:
             for warped in self.warpedPages:
-                self.imageScroller.add_item(ImageBtn(warped,self.set_preview))
+                imageBtn = ImageBtn(warped,self.set_preview)
+                self.imageScroller.add_item(imageBtn)
+                imageBtn.on_image_changed.connect(self.preview_updated)
         else:
-            self.imageScroller.add_item(ImageBtn(frame,self.set_preview))
+            imageBtn = ImageBtn(frame,self.set_preview)
+            self.imageScroller.add_item(imageBtn)
+            imageBtn.on_image_changed.connect(self.preview_updated)
 
     def set_preview(self, selected):
         self.selected = selected
+        self.mainlayout.itemAt(2).widget().set_selected(selected)
         q_image = self.selected.q_image
         self.q_imaage = q_image.scaled(self.previewImage.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         self.previewImage.setPixmap(QPixmap.fromImage(self.q_imaage))
+
+    def preview_updated(self):
+        image = self.selected.q_image
+        q_image = image
+        self.q_imaage = q_image.scaled(self.previewImage.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        self.previewImage.setPixmap(QPixmap.fromImage(self.q_imaage))
+
+
 
     def resizeEvent(self, event):
         """Trigger image resize when the window resizes."""
@@ -530,15 +542,12 @@ class EditImageWidget(QWidget):
             self.previewImage.setPixmap(QPixmap.fromImage(self.q_imaage))
         super().resizeEvent(event)
 
-
 class FiltersLayout(QWidget):
-    def __init__(self , selected):
+    def __init__(self):
         super().__init__()
         self.setFixedHeight(200)
         layout = QVBoxLayout(self)
-
-        
-
+        self.selected = None
         # Filters Container
         self.filtersWidget = QWidget() 
         self.filtersWidget.setStyleSheet("background-color: black; border-radius: 10px")
@@ -550,11 +559,16 @@ class FiltersLayout(QWidget):
 
         self.filtersContainer.addWidget(filtersLabel)
         self.filtersSelection = QHBoxLayout()
-        self.filtersSelection.addWidget(ActionsBtn("Original"))
-        self.filtersSelection.addWidget(ActionsBtn("Gray"))
-        self.filtersSelection.addWidget(ActionsBtn("B&W"))
-        self.filtersSelection.addWidget(ActionsBtn("Negative"))
-        self.filtersSelection.addWidget(ActionsBtn("Lines"))
+        self.original = ActionsBtn("Original")
+        self.gray = ActionsBtn("Gray")
+        self.bw =ActionsBtn("B&W")
+        self.negative =ActionsBtn("Negative")
+        self.lines = ActionsBtn("Lines")
+        self.filtersSelection.addWidget(self.original)
+        self.filtersSelection.addWidget(self.gray )
+        self.filtersSelection.addWidget(self.bw)
+        self.filtersSelection.addWidget(self.negative)
+        self.filtersSelection.addWidget(self.lines)
         self.filtersContainer.addLayout(self.filtersSelection)
         
         # IMG Actions Container
@@ -571,21 +585,23 @@ class FiltersLayout(QWidget):
         self.actionsSelection.addWidget(ActionsBtn("Rotate-L"))
         self.actionsSelection.addWidget(ActionsBtn("Rotate-R"))
         self.actionsSelection.addWidget(ActionsBtn("Delete"))
-        self.actionsSelection.addWidget(ActionsBtn("Add"))
         self.imgactionsContainer.addLayout(self.actionsSelection)
 
         # Main Horizontal Layout
         self.mainlayout = QHBoxLayout()
         self.mainlayout.addWidget(self.filtersWidget, 1)  # 1 = stretch factor
         self.mainlayout.addWidget(self.imgActionsWidget, 1)  # 1 = stretch factor
-
-        button = QPushButton("Asdasds")
-        button.clicked.connect(lambda : self.test(selected))
-
-        self.mainlayout.addWidget(button)
-
         layout.addLayout(self.mainlayout)
 
-    def test(self,selected):
-        print(selected)
+    def set_selected(self, selected):
+        self.selected = selected
+        self.original.set_selected(selected)
+        self.gray.set_selected(selected)
+        self.bw.set_selected(selected)
+        self.negative.set_selected(selected)
+        self.lines.set_selected(selected)
+
+
+        
+
 
