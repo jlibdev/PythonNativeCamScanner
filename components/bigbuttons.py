@@ -86,6 +86,7 @@ class ImageBtn(QWidget):
         btn(self)
 
     def apply_filter(self, filter):
+        print(f"Applied : {filter}" )
         match filter:
             case "Gray":
                 self.cv_image = cv2.cvtColor(self.cv_img_orig , cv2.COLOR_RGB2GRAY)
@@ -105,8 +106,20 @@ class ImageBtn(QWidget):
             case "AMT":
                 gray = cv2.cvtColor(self.cv_img_orig, cv2.COLOR_RGB2GRAY)
                 self.cv_image = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 3, 5)
+            case "Rotate-CCW":
+                self.cv_img_orig = cv2.rotate(self.cv_img_orig, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                self.cv_image = cv2.rotate(self.cv_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            case "Rotate-CW":
+                self.cv_img_orig = cv2.rotate(self.cv_img_orig, cv2.ROTATE_90_CLOCKWISE)
+                self.cv_image = cv2.rotate(self.cv_image, cv2.ROTATE_90_CLOCKWISE)
             case _:
                 print("Filter Does Not Exist")
+
+        self.q_image = cv2_to_QImage(self.cv_image)
+        pixmap = QPixmap.fromImage(self.q_image)
+        pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        self.imglabel.setPixmap(pixmap)
+        self.on_image_changed.emit()
 
         
 
@@ -137,6 +150,8 @@ class ActionsBtn(QWidget):
     def set_selected(self , selected):
         self.selected = selected
 
+    def disable_btn(self, is_disabled):
+        self.btn.setDisabled(is_disabled)
 
 
 

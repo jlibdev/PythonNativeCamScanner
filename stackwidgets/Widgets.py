@@ -458,6 +458,7 @@ class EditImageWidget(QWidget):
         self.parentWidget().setCurrentIndex(0)
         self.previewImage.setPixmap(QPixmap(resource_path('icons/noimage.png')))
         clear_widget(self.imageListContainer)
+        self.filtersContainer.clear_selected()
         
     def update_image(self, pages, frame):
         self.warpedPages.clear()
@@ -559,18 +560,13 @@ class FiltersLayout(QWidget):
 
         self.filtersContainer.addWidget(filtersLabel)
         self.filtersSelection = QHBoxLayout()
-        self.original = ActionsBtn("Orig")
-        self.gray = ActionsBtn("Gray")
-        self.bw =ActionsBtn("B&W")
-        self.negative =ActionsBtn("Nega")
-        self.utso = ActionsBtn("Otsu")
-        self.amt = ActionsBtn("AMT")
-        self.filtersSelection.addWidget(self.original)
-        self.filtersSelection.addWidget(self.gray )
-        self.filtersSelection.addWidget(self.bw)
-        self.filtersSelection.addWidget(self.negative)
-        self.filtersSelection.addWidget(self.utso)
-        self.filtersSelection.addWidget(self.amt)
+
+        self.filters = [ActionsBtn("Orig") , ActionsBtn("Gray") , ActionsBtn("B&W") , ActionsBtn("Nega") ,ActionsBtn("Otsu") , ActionsBtn("AMT") ]
+
+        for filter in self.filters:
+            self.filtersSelection.addWidget(filter)
+            filter.disable_btn(True)
+        
         self.filtersContainer.addLayout(self.filtersSelection)
         
         # IMG Actions Container
@@ -582,13 +578,18 @@ class FiltersLayout(QWidget):
         actionsLabel.setStyleSheet("font-size: 24px")
         actionsLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
+        self.actions = [ActionsBtn("Rotate-CCW") , ActionsBtn("Rotate-CW") , ActionsBtn("Delete")]
+
         self.imgactionsContainer.addWidget(actionsLabel)
         self.actionsSelection = QHBoxLayout()
-        self.actionsSelection.addWidget(ActionsBtn("Rotate-L"))
-        self.actionsSelection.addWidget(ActionsBtn("Rotate-R"))
-        self.actionsSelection.addWidget(ActionsBtn("Delete"))
-        self.imgactionsContainer.addLayout(self.actionsSelection)
+
         
+        for action in self.actions:
+            self.actionsSelection.addWidget(action)
+            action.disable_btn(True)
+
+        self.imgactionsContainer.addLayout(self.actionsSelection)
+
         self.mainlayout = QHBoxLayout()
         self.mainlayout.addWidget(self.filtersWidget, 1)  
         self.mainlayout.addWidget(self.imgActionsWidget, 1)  
@@ -596,12 +597,24 @@ class FiltersLayout(QWidget):
 
     def set_selected(self, selected):
         self.selected = selected
-        self.original.set_selected(selected)
-        self.gray.set_selected(selected)
-        self.bw.set_selected(selected)
-        self.negative.set_selected(selected)
-        self.utso.set_selected(selected)
-        self.amt.set_selected(selected)
+        for filter in self.filters:
+            filter.set_selected(selected)
+            filter.disable_btn(False)
+        
+        for action in self.actions:
+            action.set_selected(selected)
+            action.disable_btn(False)
+
+    def clear_selected(self):
+        for filter in self.filters:
+            filter.set_selected(None)
+            filter.disable_btn(True)
+
+        for action in self.actions:
+            action.set_selected(None)
+            action.disable_btn(True)
+    
+    
 
 
         
