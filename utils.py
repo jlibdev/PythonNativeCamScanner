@@ -3,6 +3,7 @@ import sys
 import cv2
 import numpy as np
 from PyQt6.QtGui import QPixmap, QImage
+from PyQt6.QtWidgets import QWidget
 
 def resource_path(relative_path):
     """ Get the absolute path to a resource, compatible with PyInstaller. """
@@ -139,4 +140,20 @@ def open_file(file_path):
         print("File not found:", file_path)
 
 
+def cv2_to_QImage(frame):
+    height, width, channels = frame.shape
+    bytes_per_line = channels * width
+    q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
 
+    return q_image
+
+
+def clear_widget(widget):
+    for child in widget.findChildren(QWidget):
+        child.setParent(None)  # Remove from layout
+        child.deleteLater()  # Delete the widget
+
+
+def save_to_image(widget):
+    for child in widget:
+        print(child) 

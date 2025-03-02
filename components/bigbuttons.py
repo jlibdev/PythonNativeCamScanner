@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget , QLabel, QScrollArea
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import QSize, Qt
-from utils import resource_path
+from utils import resource_path, cv2_to_QImage
 import cv2
 
 
@@ -44,36 +44,55 @@ class ImageNavButton(QWidget):
         self.button.setIcon(QIcon(resource_path(icon)))
 
 class ImageBtn(QWidget):
-    def __init__(self , q_image, btn_action):
+    def __init__(self , cv_img, btn_action ):
         super().__init__()
         self.setFixedSize(50,76)
+
+        self.cv_image = cv_img
+
+        self.cv_img_orig = cv_img
+
+        self.q_image = cv2_to_QImage(self.cv_image)
+
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.image = q_image
         self.imglabel = QLabel()
         self.imglabel.setStyleSheet("background-color: black;border-radius: 10px;")
         self.imglabel.setFixedSize(self.size())
         self.imglabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        pixmap = QPixmap.fromImage(self.image)
+        pixmap = QPixmap.fromImage(self.q_image)
         pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
 
         self.imglabel.setPixmap(pixmap)
 
         self.button = QPushButton(self)
         self.button.setStyleSheet("background-color: black; border-radius: 10px;")
+        self.button.clicked.connect(lambda: self.on_click(btn_action))
+        self.button.setFixedSize(self.imglabel.size())
+
+
         button_layout = QVBoxLayout(self.button)
         button_layout.addWidget(self.imglabel)
         button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         button_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
         button_layout.setSpacing(0)  # Remove spacing
-        self.button.clicked.connect(lambda: self.on_click(btn_action))
-
-        self.button.setFixedSize(self.imglabel.size())
-
+        
         layout.addWidget(self.button)
     
     def on_click(self, btn):
-        btn()
+        btn(self)
+
+    def apply_filter(self, filter):
+        pass
+    
+    def apply_imgActn(self , type):
+        pass
+
+    def update_image(self):
+        pass
+
+        
+
 

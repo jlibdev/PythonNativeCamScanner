@@ -386,6 +386,8 @@ class EditImageWidget(QWidget):
 
         self.warpedPages = []
 
+        self.selected = None
+
         # UI ELEMENTS
 
         # Home Button
@@ -394,6 +396,8 @@ class EditImageWidget(QWidget):
         # Export Button
         exportbutton = ImageNavButton(icon = 'icons/export.png',action = self.export_dialog, direction=Qt.LayoutDirection.RightToLeft , text = "EXPORT", fixedsize=(100,50))
 
+        self.q_imaage = None
+
         # LAYOUTS
         self.mainlayout = QVBoxLayout()
         self.navLayout = QHBoxLayout()
@@ -401,8 +405,6 @@ class EditImageWidget(QWidget):
         self.imageListContainer = QScrollArea()
         self.imageScroller = imageSrollerV()
         self.imageListContainer.setWidget(self.imageScroller)
-        self.filtersHBoxContainer = QHBoxLayout()
-
 
         # Styles
 
@@ -425,16 +427,20 @@ class EditImageWidget(QWidget):
         self.previewImage = QLabel()
         self.previewImage.setPixmap(QPixmap(resource_path('icons/noimage.png')))
         self.previewImage.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # self.previewImage.setStyleSheet("background-color: #D9D9D9")
+        self.previewImage.setStyleSheet("background-color: black ; border-radius: 10px")
         self.previewImage.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.imagePreviewContainer.addWidget(self.previewImage)
+
+
+        # Filters Container
+        self.filtersContainer = FiltersLayout()
 
         # Main Layout
         
         self.mainlayout.addLayout(self.navLayout)
         self.mainlayout.addLayout(self.imagePreviewContainer)
-        self.mainlayout.addLayout(self.filtersHBoxContainer)
         self.mainlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.mainlayout.addWidget(self.filtersContainer)
 
         self.setLayout(self.mainlayout)
     
@@ -442,9 +448,9 @@ class EditImageWidget(QWidget):
         ExportPopUp().exec()
     
     def to_home(self):
-        self.warpedPages = []
+        self.warpedPages.clear()
         self.parentWidget().setCurrentIndex(0)
-    
+        
     def update_image(self, pages, frame):
         self.warpedPages.clear()
         for page in pages:
@@ -453,7 +459,6 @@ class EditImageWidget(QWidget):
                 continue
 
             page = self.order_corners(page) 
-
             width_top = np.linalg.norm(page[0] - page[1])  
             width_bottom = np.linalg.norm(page[3] - page[2])  
             max_width = max(int(width_top), int(width_bottom))
@@ -501,18 +506,55 @@ class EditImageWidget(QWidget):
     def display_image(self, frame):
         if self.warpedPages:
             for warped in self.warpedPages:
-                height, width, channels = warped.shape
-                bytes_per_line = channels * width
-                q_image = QImage(warped.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-                self.imageScroller.add_item(ImageBtn(q_image,self.set_preview))
+                self.imageScroller.add_item(ImageBtn(warped,self.set_preview))
         else:
-            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-            self.warpedPages.append(frame)
-            height, width, channels = frame.shape
-            bytes_per_line = channels * width
-            q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
-            self.imageScroller.add_item(ImageBtn(q_image,self.set_preview))
+            self.imageScroller.add_item(ImageBtn(frame,self.set_preview))
 
-    def set_preview(self):
-        cv2.imshow("" , self.warpedPages[0])
+    def set_preview(self, selected):
+        self.selected = selected
+        q_image = self.selected.q_image
+        self.q_imaage = q_image.scaled(self.previewImage.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        self.previewImage.setPixmap(QPixmap.fromImage(self.q_imaage))
+
+    def resizeEvent(self, event):
+        """Trigger image resize when the window resizes."""
+        if self.q_imaage:
+            self.q_imaage = self.q_imaage.scaled(self.previewImage.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            self.previewImage.setPixmap(QPixmap.fromImage(self.q_imaage))
+        super().resizeEvent(event)
+
+class FiltersLayout(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setFixedHeight(200)
+        layout = QVBoxLayout(self)
+
+        # Layouts
+        
+        # Filters Layout
+        self.filtersContainer = QVBoxLayout()
+        self.filtersContainer.setAlignment(Qt.AlignmentFlag.AlignTop)
+        filtersLabel = QLabel("FILTERS")
+        filtersLabel.setStyleSheet("font-size: 24px")
+        filtersLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.filtersContainer.addWidget(filtersLabel)
+
+
+        # IMG Actions Layouts
+        self.imgactionsContainer = QVBoxLayout()
+        self.imgactionsContainer.setAlignment(Qt.AlignmentFlag.AlignTop)
+        actionsLabel = QLabel("IMG")
+        actionsLabel.setStyleSheet("font-size: 24px")
+        actionsLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.imgactionsContainer.addWidget(actionsLabel)
+
+        self.mainlayout = QHBoxLayout()
+        
+        self.mainlayout.addWidget(filtersLabel)
+        self.mainlayout.addWidget(actionsLabel)
+        layout.addLayout(self.mainlayout)
+
+    def test(self):
+        pass
+
 
