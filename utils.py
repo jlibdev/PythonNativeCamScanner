@@ -149,9 +149,13 @@ def cv2_to_QImage(frame):
 
 
 def clear_widget(widget):
-    for child in widget.findChildren(QWidget):
-        child.setParent(None)  # Remove from layout
-        child.deleteLater()  # Delete the widget
+    children = widget.findChildren(QWidget)
+    print(widget.children())
+    if len(children) > 2:
+        for child in children[2:]:  # Skip the first child
+            child.setParent(None)
+            child.deleteLater()
+    print(widget.children())
 
 
 def save_to_image(widget):

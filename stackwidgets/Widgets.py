@@ -4,7 +4,7 @@ from PyQt6.QtGui import QIcon , QImage , QPixmap
 from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal, Qt, QThread 
 import cv2
 import numpy as np
-from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file
+from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file , clear_widget
 import os
 from components.Popups import ExportPopUp
 from components.Scrollers import imageSrollerV
@@ -450,6 +450,8 @@ class EditImageWidget(QWidget):
     def to_home(self):
         self.warpedPages.clear()
         self.parentWidget().setCurrentIndex(0)
+        self.previewImage.setPixmap(QPixmap(resource_path('icons/noimage.png')))
+        clear_widget(self.imageListContainer)
         
     def update_image(self, pages, frame):
         self.warpedPages.clear()
