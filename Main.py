@@ -13,6 +13,7 @@ class CamScammerApp(QStackedWidget):
         self.capture_widget = CaptureWidget()
         self.edit_image_widget = EditImageWidget()
 
+
         self.addWidget(self.landingwidget)
         self.addWidget(self.capture_widget)
         self.addWidget(self.edit_image_widget)
@@ -31,7 +32,7 @@ def main():
 
     if font_id != -1:
         font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
-        app.setFont(QFont(font_family, 12))  
+        app.setFont(QFont(font_family, 12)) 
 
     window = CamScammerApp()
     window.setWindowTitle("CamScammer")

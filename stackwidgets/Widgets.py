@@ -397,6 +397,10 @@ class EditImageWidget(QWidget):
         # Export Button
         exportbutton = ImageNavButton(icon = 'icons/export.png',action = self.export_dialog, direction=Qt.LayoutDirection.RightToLeft , text = "EXPORT", fixedsize=(100,50))
 
+        # Capture Button
+
+        capturebutton = ImageNavButton('icons\scan.png' , self.to_capture)
+
         self.q_imaage = None
 
         # LAYOUTS
@@ -419,6 +423,7 @@ class EditImageWidget(QWidget):
 
         # Navigation
         self.navLayout.addWidget(homebutton)
+        self.navLayout.addWidget(capturebutton)
         self.navLayout.addStretch()
         self.navLayout.addWidget(exportbutton)
         self.navLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -433,7 +438,6 @@ class EditImageWidget(QWidget):
         self.imagePreviewContainer.addWidget(self.previewImage)
 
         
-
         # Filters Container
         self.filtersContainer = FiltersLayout()
 
@@ -452,6 +456,10 @@ class EditImageWidget(QWidget):
         export_to_img(valid_list)
         
         ExportPopUp().exec()
+    
+    def to_capture(self):
+        self.parentWidget().setCurrentIndex(1)
+        self.parentWidget().capture_widget.toggle_camera()
     
     def to_home(self):
         self.warpedPages.clear()
@@ -516,10 +524,14 @@ class EditImageWidget(QWidget):
                 imageBtn = ImageBtn(warped,self.set_preview)
                 self.imageScroller.add_item(imageBtn)
                 imageBtn.on_image_changed.connect(self.preview_updated)
+                imageBtn.on_self_delete.connect(self.filtersContainer.clear_selected)
+                imageBtn.on_self_delete.connect(self.on_image_deleted)
         else:
             imageBtn = ImageBtn(frame,self.set_preview)
             self.imageScroller.add_item(imageBtn)
             imageBtn.on_image_changed.connect(self.preview_updated)
+            imageBtn.on_self_delete.connect(self.filtersContainer.clear_selected)
+            imageBtn.on_self_delete.connect(self.on_image_deleted)
 
     def set_preview(self, selected):
         self.selected = selected
@@ -534,7 +546,8 @@ class EditImageWidget(QWidget):
         self.q_imaage = q_image.scaled(self.previewImage.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         self.previewImage.setPixmap(QPixmap.fromImage(self.q_imaage))
 
-
+    def on_image_deleted(self):
+        self.previewImage.setPixmap(QPixmap(resource_path('icons/noimage.png')))
 
     def resizeEvent(self, event):
         """Trigger image resize when the window resizes."""
@@ -570,7 +583,7 @@ class FiltersLayout(QWidget):
         self.filtersContainer.addLayout(self.filtersSelection)
         
         # IMG Actions Container
-        self.imgActionsWidget = QWidget()  # Wrap in a QWidget
+        self.imgActionsWidget = QWidget() 
         self.imgactionsContainer = QVBoxLayout(self.imgActionsWidget)  
         self.imgActionsWidget.setStyleSheet("background-color: black;  border-radius: 10px")
 

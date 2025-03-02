@@ -45,6 +45,7 @@ class ImageNavButton(QWidget):
 
 class ImageBtn(QWidget):
     on_image_changed = pyqtSignal()
+    on_self_delete = pyqtSignal()
     def __init__(self , cv_img, btn_action ):
         super().__init__()
         self.setFixedSize(50,76)
@@ -86,32 +87,41 @@ class ImageBtn(QWidget):
         btn(self)
 
     def apply_filter(self, filter):
-        print(f"Applied : {filter}" )
         match filter:
             case "Gray":
                 self.cv_image = cv2.cvtColor(self.cv_img_orig , cv2.COLOR_RGB2GRAY)
+                self.on_image_changed.emit()
             case "Orig":
                 self.cv_image = self.cv_img_orig
+                self.on_image_changed.emit()
             case "B&W":
                 self.cv_image = self.cv_img_orig[:,:,2]
                 _, self.cv_image = cv2.threshold(self.cv_image, 100, 255, cv2.THRESH_BINARY)
+                self.on_image_changed.emit()
             case "Nega":
                 blur = cv2.bilateralFilter(self.cv_img_orig, 9, 75, 75)
                 gray = cv2.cvtColor(blur, cv2.COLOR_RGB2GRAY)
                 _,self.cv_image = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY_INV)
+                self.on_image_changed.emit()
             case "Otsu":
                 gray = cv2.cvtColor(self.cv_img_orig, cv2.COLOR_RGB2GRAY)
                 blur = cv2.GaussianBlur(gray , (5,5), 0)
                 _, self.cv_image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                self.on_image_changed.emit()
             case "AMT":
                 gray = cv2.cvtColor(self.cv_img_orig, cv2.COLOR_RGB2GRAY)
                 self.cv_image = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 3, 5)
+                self.on_image_changed.emit()
             case "Rotate-CCW":
                 self.cv_img_orig = cv2.rotate(self.cv_img_orig, cv2.ROTATE_90_COUNTERCLOCKWISE)
                 self.cv_image = cv2.rotate(self.cv_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                self.on_image_changed.emit()
             case "Rotate-CW":
                 self.cv_img_orig = cv2.rotate(self.cv_img_orig, cv2.ROTATE_90_CLOCKWISE)
                 self.cv_image = cv2.rotate(self.cv_image, cv2.ROTATE_90_CLOCKWISE)
+                self.on_image_changed.emit()
+            case "Delete":
+                self.deleteSelf()
             case _:
                 print("Filter Does Not Exist")
 
@@ -119,8 +129,13 @@ class ImageBtn(QWidget):
         pixmap = QPixmap.fromImage(self.q_image)
         pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         self.imglabel.setPixmap(pixmap)
-        self.on_image_changed.emit()
+        
 
+    def deleteSelf(self):
+        self.on_self_delete.emit()
+        self.deleteLater()
+        self.hide()
+        self.parentWidget().removed_item()
         
 
 class ActionsBtn(QWidget):
@@ -130,17 +145,10 @@ class ActionsBtn(QWidget):
         self.selected = None
         self.setFixedSize(80, 80)
         self.setStyleSheet("background-color: gray;")
-
         layout = QVBoxLayout(self)
-
-        # Create a button
         self.btn = QPushButton(action_name, self)  # Set text on button
         self.btn.setFixedSize(self.size())
-
-        # Add the button to the layout
         layout.addWidget(self.btn)
-
-        # Connect button click to an action
         self.btn.clicked.connect(self.action)
 
     def action(self):
