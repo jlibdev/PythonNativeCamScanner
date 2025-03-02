@@ -170,7 +170,7 @@ def save_to_image(widget):
         print(child) 
 
 def export_to_pdf(image_list, output_pdf=os.path.join(os.path.expanduser("~"), "Documents", "camscanner_files", "pdf" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.pdf")):
-   if image_list:
+    if image_list:
         c = canvas.Canvas(output_pdf, pagesize=letter)
         pdf_width, pdf_height = letter
 
@@ -228,6 +228,10 @@ def export_to_pdf(image_list, output_pdf=os.path.join(os.path.expanduser("~"), "
             os.remove(temp_filename)
 
         c.save()
+        print(f"PDF saved as {output_pdf}")
+
+    else:
+       print("Error")
 
 def export_to_img(image_list, img_type="png"):
     for i in range(len(image_list)):
