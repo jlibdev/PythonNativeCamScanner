@@ -1,13 +1,14 @@
 from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea , QFileDialog, QMessageBox
-from components.bigbuttons import create_big_button, ImageNavButton, ImageBtn
+from components.bigbuttons import create_big_button, ImageNavButton, ImageBtn , ActionsBtn
 from PyQt6.QtGui import QIcon , QImage , QPixmap
 from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal, Qt, QThread 
 import cv2
 import numpy as np
-from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file , clear_widget
+from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file , clear_widget , export_to_pdf, export_to_img
 import os
 from components.Popups import ExportPopUp
 from components.Scrollers import imageSrollerV
+
 
 class WatcherThread(QThread):
     file_signal = pyqtSignal(str)
@@ -433,7 +434,7 @@ class EditImageWidget(QWidget):
 
 
         # Filters Container
-        self.filtersContainer = FiltersLayout()
+        self.filtersContainer = FiltersLayout(self.selected)
 
         # Main Layout
         
@@ -445,6 +446,10 @@ class EditImageWidget(QWidget):
         self.setLayout(self.mainlayout)
     
     def export_dialog(self):
+        valid_list = self.imageScroller.children()[1:]
+        export_to_pdf(valid_list)
+        export_to_img(valid_list)
+        
         ExportPopUp().exec()
     
     def to_home(self):
@@ -525,38 +530,62 @@ class EditImageWidget(QWidget):
             self.previewImage.setPixmap(QPixmap.fromImage(self.q_imaage))
         super().resizeEvent(event)
 
+
 class FiltersLayout(QWidget):
-    def __init__(self):
+    def __init__(self , selected):
         super().__init__()
         self.setFixedHeight(200)
         layout = QVBoxLayout(self)
 
-        # Layouts
         
-        # Filters Layout
-        self.filtersContainer = QVBoxLayout()
-        self.filtersContainer.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # Filters Container
+        self.filtersWidget = QWidget() 
+        self.filtersWidget.setStyleSheet("background-color: black; border-radius: 10px")
+        self.filtersContainer = QVBoxLayout(self.filtersWidget)
+
         filtersLabel = QLabel("FILTERS")
         filtersLabel.setStyleSheet("font-size: 24px")
         filtersLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
         self.filtersContainer.addWidget(filtersLabel)
+        self.filtersSelection = QHBoxLayout()
+        self.filtersSelection.addWidget(ActionsBtn("Original"))
+        self.filtersSelection.addWidget(ActionsBtn("Gray"))
+        self.filtersSelection.addWidget(ActionsBtn("B&W"))
+        self.filtersSelection.addWidget(ActionsBtn("Negative"))
+        self.filtersSelection.addWidget(ActionsBtn("Lines"))
+        self.filtersContainer.addLayout(self.filtersSelection)
+        
+        # IMG Actions Container
+        self.imgActionsWidget = QWidget()  # Wrap in a QWidget
+        self.imgactionsContainer = QVBoxLayout(self.imgActionsWidget)  
+        self.imgActionsWidget.setStyleSheet("background-color: black;  border-radius: 10px")
 
-
-        # IMG Actions Layouts
-        self.imgactionsContainer = QVBoxLayout()
-        self.imgactionsContainer.setAlignment(Qt.AlignmentFlag.AlignTop)
         actionsLabel = QLabel("IMG")
         actionsLabel.setStyleSheet("font-size: 24px")
         actionsLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.imgactionsContainer.addWidget(actionsLabel)
 
+        self.imgactionsContainer.addWidget(actionsLabel)
+        self.actionsSelection = QHBoxLayout()
+        self.actionsSelection.addWidget(ActionsBtn("Rotate-L"))
+        self.actionsSelection.addWidget(ActionsBtn("Rotate-R"))
+        self.actionsSelection.addWidget(ActionsBtn("Delete"))
+        self.actionsSelection.addWidget(ActionsBtn("Add"))
+        self.imgactionsContainer.addLayout(self.actionsSelection)
+
+        # Main Horizontal Layout
         self.mainlayout = QHBoxLayout()
-        
-        self.mainlayout.addWidget(filtersLabel)
-        self.mainlayout.addWidget(actionsLabel)
+        self.mainlayout.addWidget(self.filtersWidget, 1)  # 1 = stretch factor
+        self.mainlayout.addWidget(self.imgActionsWidget, 1)  # 1 = stretch factor
+
+        button = QPushButton("Asdasds")
+        button.clicked.connect(lambda : self.test(selected))
+
+        self.mainlayout.addWidget(button)
+
         layout.addLayout(self.mainlayout)
 
-    def test(self):
-        pass
-
+    def test(self,selected):
+        print(selected)
 

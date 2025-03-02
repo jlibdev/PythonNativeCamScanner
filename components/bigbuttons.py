@@ -85,14 +85,57 @@ class ImageBtn(QWidget):
         btn(self)
 
     def apply_filter(self, filter):
-        pass
+        match filter:
+            case 1:
+                pass
+            case 2:
+                pass
+            case 3:
+                pass
+            case 4:
+                pass
+            case _:
+                pass
     
     def apply_imgActn(self , type):
-        pass
+        match type:
+            case 1:
+                pass
+            case 2:
+                pass
+            case 3:
+                pass
+            case 4:
+                pass
+            case _:
+                pass
 
-    def update_image(self):
+    def update_image(self , newImg):
         pass
 
         
+class ActionsBtn(QWidget):
+    def __init__(self, action_name):
+        super().__init__()
+        self.setFixedSize(80, 80)
+        self.setStyleSheet("background-color: gray;")
+
+        layout = QVBoxLayout(self)
+
+        # Create a button
+        self.btn = QPushButton(action_name, self)  # Set text on button
+        self.btn.setFixedSize(self.size())
+
+        # Add the button to the layout
+        layout.addWidget(self.btn)
+
+        # Connect button click to an action
+        self.btn.clicked.connect(self.action)
+
+    def action(self):
+        print("Action triggered")
+
+
+
 
 
