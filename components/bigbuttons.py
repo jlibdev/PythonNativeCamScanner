@@ -51,7 +51,7 @@ class ImageBtn(QWidget):
 
         self.cv_image = cv_img
 
-        self.cv_img_orig = cv_img
+        self.cv_img_orig = cv_img.copy()
 
         self.q_image = cv2_to_QImage(self.cv_image)
 
@@ -88,24 +88,28 @@ class ImageBtn(QWidget):
     def apply_filter(self, filter):
         match filter:
             case "Gray":
-                self.cv_image = cv2.cvtColor(self.cv_image , cv2.COLOR_BGR2RGB)
-                self.cv_image = cv2.cvtColor(self.cv_image , cv2.COLOR_RGB2GRAY)
-                self.q_image = cv2_to_QImage(self.cv_image)
-            case "Original":
+                self.cv_image = cv2.cvtColor(self.cv_img_orig , cv2.COLOR_RGB2GRAY)
+            case "Orig":
                 self.cv_image = self.cv_img_orig
-                self.q_image = cv2_to_QImage(self.cv_image)
-            case 3:
-                pass
-            case 4:
-                pass
+            case "B&W":
+                self.cv_image = self.cv_img_orig[:,:,2]
+                _, self.cv_image = cv2.threshold(self.cv_image, 100, 255, cv2.THRESH_BINARY)
+            case "Nega":
+                blur = cv2.bilateralFilter(self.cv_img_orig, 9, 75, 75)
+                gray = cv2.cvtColor(blur, cv2.COLOR_RGB2GRAY)
+                _,self.cv_image = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY_INV)
+            case "Otsu":
+                gray = cv2.cvtColor(self.cv_img_orig, cv2.COLOR_RGB2GRAY)
+                blur = cv2.GaussianBlur(gray , (5,5), 0)
+                _, self.cv_image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            case "AMT":
+                gray = cv2.cvtColor(self.cv_img_orig, cv2.COLOR_RGB2GRAY)
+                self.cv_image = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 3, 5)
             case _:
-                pass
-        pixmap = QPixmap.fromImage(self.q_image)
-        pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        self.imglabel.setPixmap(pixmap)
-        self.on_image_changed.emit()
+                print("Filter Does Not Exist")
 
         
+
 class ActionsBtn(QWidget):
     def __init__(self, action_name):
         super().__init__()
@@ -127,9 +131,9 @@ class ActionsBtn(QWidget):
         self.btn.clicked.connect(self.action)
 
     def action(self):
-        print(self.selected)
         if self.selected:
             self.selected.apply_filter(self.action_name)
+
     def set_selected(self , selected):
         self.selected = selected
 

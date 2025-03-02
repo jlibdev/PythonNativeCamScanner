@@ -559,16 +559,18 @@ class FiltersLayout(QWidget):
 
         self.filtersContainer.addWidget(filtersLabel)
         self.filtersSelection = QHBoxLayout()
-        self.original = ActionsBtn("Original")
+        self.original = ActionsBtn("Orig")
         self.gray = ActionsBtn("Gray")
         self.bw =ActionsBtn("B&W")
-        self.negative =ActionsBtn("Negative")
-        self.lines = ActionsBtn("Lines")
+        self.negative =ActionsBtn("Nega")
+        self.utso = ActionsBtn("Otsu")
+        self.amt = ActionsBtn("AMT")
         self.filtersSelection.addWidget(self.original)
         self.filtersSelection.addWidget(self.gray )
         self.filtersSelection.addWidget(self.bw)
         self.filtersSelection.addWidget(self.negative)
-        self.filtersSelection.addWidget(self.lines)
+        self.filtersSelection.addWidget(self.utso)
+        self.filtersSelection.addWidget(self.amt)
         self.filtersContainer.addLayout(self.filtersSelection)
         
         # IMG Actions Container
@@ -586,11 +588,10 @@ class FiltersLayout(QWidget):
         self.actionsSelection.addWidget(ActionsBtn("Rotate-R"))
         self.actionsSelection.addWidget(ActionsBtn("Delete"))
         self.imgactionsContainer.addLayout(self.actionsSelection)
-
-        # Main Horizontal Layout
+        
         self.mainlayout = QHBoxLayout()
-        self.mainlayout.addWidget(self.filtersWidget, 1)  # 1 = stretch factor
-        self.mainlayout.addWidget(self.imgActionsWidget, 1)  # 1 = stretch factor
+        self.mainlayout.addWidget(self.filtersWidget, 1)  
+        self.mainlayout.addWidget(self.imgActionsWidget, 1)  
         layout.addLayout(self.mainlayout)
 
     def set_selected(self, selected):
@@ -599,7 +600,8 @@ class FiltersLayout(QWidget):
         self.gray.set_selected(selected)
         self.bw.set_selected(selected)
         self.negative.set_selected(selected)
-        self.lines.set_selected(selected)
+        self.utso.set_selected(selected)
+        self.amt.set_selected(selected)
 
 
         
