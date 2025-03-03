@@ -17,7 +17,8 @@ class WatcherThread(QThread):
         super().__init__()
         self.watch_path = watch_path
         self.running = True
-    
+        self.refreshing = False 
+
     def run(self):
         while self.running:
             # Implement actual file-watching logic here
@@ -38,9 +39,12 @@ class LandingWidget(QWidget):
         self.pdf_buttons = {}
         home_dir = os.path.expanduser("~")
         self.watch_path = os.path.join(home_dir, "Documents", "camscanner_files")
+        self.refreshing = False  # Initialize refreshing
         self.init_ui()
         self.start_watcher()
-        self.edit_image_widget = EditImageWidget()
+        self.edit_image_widget = None
+
+
 
     def init_ui(self):
 
@@ -55,9 +59,10 @@ class LandingWidget(QWidget):
         buttonsHbox = QHBoxLayout()
         buttonsHbox.addWidget(create_big_button("IMPORT IMAGE FROM LOCAL FILE" , resource_path('icons/folderdown.png') , self.handle_import_image))
         buttonsHbox.addWidget(create_big_button("CAPTURE IMAGE FROM CAMERA" , resource_path('icons/camera.png') , self.to_capture))
+        buttonsHbox.setAlignment(Qt.AlignmentFlag.AlignJustify)
 
         filesteamLabel = QLabel("Filestream")
-        filesteamLabel.setStyleSheet("QLabel { font-size: 20px; padding: 10px; }")
+        filesteamLabel.setStyleSheet("QLabel { font-size: 20px; }")
         mainlayout.addWidget(appname)
         mainlayout.addLayout(buttonsHbox)
         mainlayout.addWidget(filesteamLabel)
@@ -127,8 +132,8 @@ class LandingWidget(QWidget):
         subWidget = QWidget()
         subWidget.setLayout(parentLayout)
         subWidget.setStyleSheet("background-color: grey;")
-
         mainlayout.addWidget(subWidget)
+        self.setContentsMargins(10, 0, 10, 10)
         # --------------------------
         self.scrollAreaLayoutLeft = scrollAreaLayoutLeft  # Store layout in self
         self.scrollAreaLayoutRight = scrollAreaLayoutRight
@@ -138,7 +143,9 @@ class LandingWidget(QWidget):
         self.parentWidget().setCurrentIndex(1) 
 
     def to_capture(self):
-        self.parentWidget().setCurrentIndex(1)
+        parent = self.parentWidget()
+        if parent:
+            parent.setCurrentIndex(1)
         self.switched.emit()
 
     def refresh_file_lists(self):
@@ -173,7 +180,8 @@ class LandingWidget(QWidget):
                     color : white;
                 }
             """)
-            btn.clicked.connect(lambda _, path=new_img: open_file(path))
+            from functools import partial
+            btn.clicked.connect(partial(open_file, new_img))
             self.scrollAreaLayoutLeft.addWidget(btn)
             self.img_buttons[new_img] = btn  # Store button reference
 
@@ -222,8 +230,13 @@ class LandingWidget(QWidget):
         self.watcher_thread.start()
 
     def handle_file_change(self, message):
-        QTimer.singleShot(0, self.refresh_file_lists)
+        if not self.refreshing:
+            self.refreshing = True
+            QTimer.singleShot(0, self.safe_refresh)
 
+    def safe_refresh(self):
+        self.refresh_file_lists()
+        self.refreshing = False
 
     # note ( ang naay #--- mao na akong mga na hilabtan or nadungag)
     def handle_import_image(self): #------------------------------  na update ko ni 
@@ -235,11 +248,23 @@ class LandingWidget(QWidget):
 
             print("Selected Image", file)
             img = cv2.imread(file)
+            if img is None:
+                QMessageBox.critical(self, "Error", "Could not load image!")
+                return
+            copy_img = img.copy()
             copy_img = img.copy()
             self.pages = []
 
             get_all_pages(copy_img, self.pages)
             print("Detected pages:", len(self.pages))
+
+            # Automatically accept detected pages
+            accepted_contours.extend(self.pages)  # Bypass user confirmation    
+            
+            # Check if any pages were accepted
+            if not accepted_contours:
+                print("No contours were accepted. Detected:", len(self.pages))
+                return
 
             if not self.pages:
                 QMessageBox.information(self, "No Contours", "No valid contours detected.")
@@ -251,13 +276,17 @@ class LandingWidget(QWidget):
             for contour in self.pages:
                 dialog = ContoursDialog(copy_img, [contour], self)  # Show only one contour
                 result = dialog.exec()
+                print("Dialog result:", result) 
 
                 if result == QDialog.DialogCode.Accepted:
                     accepted_contours.append(contour)  # Store only accepted contours
             
             # Process only accepted contours
             if accepted_contours:
+                print("Accepted contours:", len(accepted_contours))  # Debugging line
                 # Emit the contours signal to send them to EditImageWidget
+                if not self.edit_image_widget:
+                    self.edit_image_widget = EditImageWidget()
                 self.edit_image_widget.contours_received.emit(accepted_contours, copy_img)
 
             else:
@@ -314,16 +343,18 @@ class ContoursDialog(QDialog):
         accept_btn.clicked.connect(self.accept)
         reject_btn.clicked.connect(self.reject)
 
+        
+
 # ------------------------------------------------------------------------------------------------    
             
 class CaptureWidget(QWidget):
     image_captured = pyqtSignal(object , object)
     def __init__(self):
         super().__init__()
-
         self.captured_frame = None
 
         self.pages = []
+        self.pages.clear()
         mainlayout = QHBoxLayout()
         mainlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
@@ -371,7 +402,7 @@ class CaptureWidget(QWidget):
         self.timer.timeout.connect(self.update_frame)
 
         # Layout Setup
-        navVbox.setAlignment(Qt.AlignmentFlag.AlignTop)
+        navVbox.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         navVbox.addWidget(homebutton)
         navVbox.addWidget(self.cameratogglebutton)
 
@@ -390,9 +421,21 @@ class CaptureWidget(QWidget):
 
     def capture_image(self):
         if self.timer.isActive():
+            if self.captured_frame is None:
+                print("No frame captured yet.")  # Debugging output
+                return  # Prevent crash if no frame is available
+
             self.toggle_camera()
-            self.image_captured.emit(self.pages , self.captured_frame)
-            self.parentWidget().setCurrentIndex(2)
+
+            if self.captured_frame is None:
+                print("No frame captured yet.")  # Debugging output
+                return
+            
+            self.image_captured.emit(self.pages, self.captured_frame)
+
+            parent = self.parentWidget()
+            if parent is not None:
+                parent.setCurrentIndex(2)
 
     def to_home(self):
         self.parentWidget().setCurrentIndex(0)
@@ -460,7 +503,8 @@ class CaptureWidget(QWidget):
             self.videoLabel.show()
 
     def closeEvent(self, event):
-        self.cap.release()
+        if self.cap is not None and self.cap.isOpened():
+            self.cap.release()
         event.accept()
 
 class EditImageWidget(QWidget):
@@ -488,7 +532,7 @@ class EditImageWidget(QWidget):
 
         # Capture Button
 
-        capturebutton = ImageNavButton('icons\scan.png' , self.to_capture)
+        capturebutton = ImageNavButton('icons/camera.png' , self.to_capture)
         self.q_imaage = None
 
         # LAYOUTS
@@ -528,9 +572,8 @@ class EditImageWidget(QWidget):
         
         # Filters Container
         self.filtersContainer = FiltersLayout()
-
-        # Main Layout
         
+        # Main Layout
         self.mainlayout.addLayout(self.navLayout)
         self.mainlayout.addLayout(self.imagePreviewContainer)
         self.mainlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -543,8 +586,12 @@ class EditImageWidget(QWidget):
         ExportPopUp(valid_list).exec()
     
     def to_capture(self):
-        self.parentWidget().setCurrentIndex(1)
-        self.parentWidget().capture_widget.toggle_camera()
+        parent = self.parentWidget()
+        if parent is not None and hasattr(parent, "capture_widget"):
+            parent.setCurrentIndex(1)
+            parent.capture_widget.toggle_camera()
+        else:
+            print("Error: capture_widget not found in parentWidget()")
     
     def to_home(self):
         self.warpedPages.clear()
@@ -555,6 +602,9 @@ class EditImageWidget(QWidget):
         
     def update_image(self, pages, frame):
         self.warpedPages.clear()
+        if not pages:
+            print("Error: No valid pages received")
+            return
         for page in pages:
             if len(page) != 4:
                 print("Skipping page: Expected 4 corners, found", len(page))
@@ -605,6 +655,11 @@ class EditImageWidget(QWidget):
         return ordered_corners
 
     def display_image(self, frame):
+
+        if frame is None:
+            print("Error: Frame is None, cannot display image.")
+            return
+        
         if self.warpedPages:
             for warped in self.warpedPages:
                 imageBtn = ImageBtn(warped,self.set_preview)
@@ -645,54 +700,62 @@ class EditImageWidget(QWidget):
 class FiltersLayout(QWidget):
     def __init__(self):
         super().__init__()
-        self.setFixedHeight(200)
-        layout = QVBoxLayout(self)
+
+        # Main Layout
+        layout = QHBoxLayout(self)
         self.selected = None
-        # Filters Container
-        self.filtersWidget = QWidget() 
-        self.filtersWidget.setStyleSheet("background-color: black; border-radius: 10px")
-        self.filtersContainer = QVBoxLayout(self.filtersWidget)
 
-        filtersLabel = QLabel("FILTERS")
-        filtersLabel.setStyleSheet("font-size: 24px")
-        filtersLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        # Filters Container (Black Background)
+        self.filtersWidget = QWidget()
+        self.filtersWidget.setFixedHeight(100)
+        self.filtersWidget.setFixedWidth(1200)
+        self.filtersWidget.setStyleSheet("background-color: black; border-radius: 10px;")
 
-        self.filtersContainer.addWidget(filtersLabel)
-        self.filtersSelection = QHBoxLayout()
+        # Layouts for Filters and Actions
+        self.filtersContainer = QHBoxLayout(self.filtersWidget)
 
-        self.filters = [ActionsBtn("Orig") , ActionsBtn("Gray") , ActionsBtn("B&W") , ActionsBtn("Nega") ,ActionsBtn("Otsu") , ActionsBtn("AMT") ]
 
-        for filter in self.filters:
-            self.filtersSelection.addWidget(filter)
-            filter.disable_btn(True)
-        
-        self.filtersContainer.addLayout(self.filtersSelection)
-        
-        # IMG Actions Container
-        self.imgActionsWidget = QWidget() 
-        self.imgactionsContainer = QVBoxLayout(self.imgActionsWidget)  
-        self.imgActionsWidget.setStyleSheet("background-color: black;  border-radius: 10px")
+        # Define Filter Buttons
+        self.filters = [ActionsBtn("Orig"), ActionsBtn("Gray"), ActionsBtn("B&W"),
+                        ActionsBtn("Nega"), ActionsBtn("Otsu"), ActionsBtn("AMT")]
 
-        actionsLabel = QLabel("IMG")
-        actionsLabel.setStyleSheet("font-size: 24px")
-        actionsLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        # Define Action Buttons
+        self.actions = [ActionsBtn("Rotate"), ActionsBtn("Delete")]
 
-        self.actions = [ActionsBtn("Rotate-CCW") , ActionsBtn("Rotate-CW") , ActionsBtn("Delete")]
+        # Apply Styles & Add Buttons to Layouts
+        self.setup_buttons(self.filters, self.filtersContainer)
+        self.setup_buttons(self.actions, self.filtersContainer)
 
-        self.imgactionsContainer.addWidget(actionsLabel)
-        self.actionsSelection = QHBoxLayout()
 
-        
-        for action in self.actions:
-            self.actionsSelection.addWidget(action)
-            action.disable_btn(True)
-
-        self.imgactionsContainer.addLayout(self.actionsSelection)
-
+        # Main Layout
         self.mainlayout = QHBoxLayout()
-        self.mainlayout.addWidget(self.filtersWidget, 1)  
-        self.mainlayout.addWidget(self.imgActionsWidget, 1)  
+        self.mainlayout.addWidget(self.filtersWidget, 1)
         layout.addLayout(self.mainlayout)
+    
+    def setup_buttons(self, buttons, layout):
+        for button in buttons:
+            button.setStyleSheet("""QPushButton {
+                background-color: #f0f0f0;
+                color: black;
+                border: 2px solid #ccc;
+                border-radius: 0px;
+                font-size: 12px;
+                font-weight: bold;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: grey;
+                color: white;
+            }
+            QPushButton:pressed {
+                background-color: lightgrey;
+            }
+            QPushButton:disabled {
+                background-color: #d3d3d3;
+                color: #888;
+            }""")
+            layout.addWidget(button)
+           
 
     def set_selected(self, selected):
         self.selected = selected
