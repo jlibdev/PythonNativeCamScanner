@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QStackedWidget
+from PyQt6.QtWidgets import QApplication, QStackedWidget , QPushButton
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
 import stackwidgets.ImportImageWidget
 import stackwidgets.LandingWidget
@@ -33,8 +33,17 @@ class CamScammerApp(QStackedWidget):
         # Signal Connections
         self.capture_widget.image_captured.connect(self.edit_image_widget.update_image)
         self.capture_widget.image_captured.connect(lambda: self.setCurrentWidget(self.edit_image_widget))
+
         self.landingwidget.switched.connect(self.capture_widget.toggle_camera)
+        self.file_stream_watcher.file_signal.connect(self.landingwidget.handle_file_change)
+
         self.resize(1280,720)
+    
+    def closeEvent(self, a0):
+        # Closing Threads
+        self.file_stream_watcher.stop()
+
+        return super().closeEvent(a0)
 
 def main():
 
