@@ -1,4 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea , QFileDialog, QMessageBox
+import components.Popups
 from components.bigbuttons import create_big_button, ImageNavButton, ImageBtn , ActionsBtn
 from PyQt6.QtGui import QIcon , QImage , QPixmap
 from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal, Qt, QThread 
@@ -8,6 +9,7 @@ from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pd
 import os
 from components.Popups import ExportPopUp
 from components.Scrollers import imageSrollerV
+
 
 
 class WatcherThread(QThread):
@@ -20,10 +22,9 @@ class WatcherThread(QThread):
     
     def run(self):
         while self.running:
-            # Implement actual file-watching logic here
-            self.msleep(1000)  # Simulate delay
+            self.msleep(1000)
             self.file_signal.emit("File changed")
-    
+
     def stop(self):
         self.running = False
         self.quit()
@@ -46,7 +47,6 @@ class LandingWidget(QWidget):
         mainlayout = QVBoxLayout()
         mainlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         mainlayout.setSpacing(50)
-
         appname = QLabel("CAMSCAMMER")
         appname.setAlignment(Qt.AlignmentFlag.AlignCenter)
         appname.setStyleSheet("QLabel { font-size: 70px; }")
@@ -208,6 +208,11 @@ class LandingWidget(QWidget):
             self.pdf_buttons[new_pdf] = btn  # Store button reference
 
         self.update()
+    
+    def closeEvent(self, a0):
+        print("Closed")
+        return super().closeEvent(a0)
+    
 
     def clear_layout(self, layout):
         while layout.count():
