@@ -1,8 +1,8 @@
 from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton, QScrollArea , QFileDialog, QMessageBox
 from components.bigbuttons import create_big_button
 from PyQt6.QtCore import Qt , QTimer , pyqtSignal, Qt
-from utils import resource_path , retrieve_img_files, retrieve_pdf_files, open_file
 import os
+from utilities import file_processing
 
 
 class LandingWidget(QWidget):
@@ -74,8 +74,8 @@ class LandingWidget(QWidget):
         
         ## Big Button Navigation Layout
         buttonsHbox = QHBoxLayout()
-        buttonsHbox.addWidget(create_big_button("IMPORT IMAGE FROM LOCAL FILE" , resource_path('icons/folderdown.png') , self.handle_import_image))
-        buttonsHbox.addWidget(create_big_button("CAPTURE IMAGE FROM CAMERA" , resource_path('icons/camera.png') , self.to_capture))
+        buttonsHbox.addWidget(create_big_button("IMPORT IMAGE FROM LOCAL FILE" , file_processing.resource_path('icons/folderdown.png') , self.handle_import_image))
+        buttonsHbox.addWidget(create_big_button("CAPTURE IMAGE FROM CAMERA" , file_processing.resource_path('icons/camera.png') , self.to_capture))
 
         ## File Stream Layouts
 
@@ -136,8 +136,8 @@ class LandingWidget(QWidget):
 
     def refresh_file_lists(self):
         print("Landing Page : Refreshing Files List")
-        imgs = retrieve_img_files()
-        pdfs = retrieve_pdf_files()
+        imgs = file_processing.retrieve_img_files()
+        pdfs = file_processing.retrieve_pdf_files()
 
         # Update Images List
         existing_imgs = set(self.img_buttons.keys())
@@ -166,7 +166,7 @@ class LandingWidget(QWidget):
                     color : white;
                 }
             """)
-            btn.clicked.connect(lambda _, path=new_img: open_file(path))
+            btn.clicked.connect(lambda _, path=new_img: file_processing.open_file(path))
             self.scrollAreaLayoutLeft.addWidget(btn)
             self.img_buttons[new_img] = btn  # Store button reference
 
@@ -197,7 +197,7 @@ class LandingWidget(QWidget):
                     color : white;
                 }
             """)
-            btn.clicked.connect(lambda _, path=new_pdf: open_file(path))
+            btn.clicked.connect(lambda _, path=new_pdf: file_processing.open_file(path))
             self.scrollAreaLayoutRight.addWidget(btn)
             self.pdf_buttons[new_pdf] = btn  # Store button reference
 

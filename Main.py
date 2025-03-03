@@ -2,9 +2,9 @@ import sys
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
 import treads.watchers
-from utils import resource_path, save_path
 import treads
 from stackwidgets import CaptureWidget, ImportImageWidget , LandingWidget , EditImageWidget
+from utilities import file_processing
 
 class CamScammerApp(QStackedWidget):
 
@@ -25,7 +25,7 @@ class CamScammerApp(QStackedWidget):
         # WATCHERS
 
         # File Stream Watcher
-        self.file_stream_watcher = treads.watchers.WatcherThread(save_path)
+        self.file_stream_watcher = treads.watchers.WatcherThread(file_processing.SAVE_PATH)
         self.file_stream_watcher.start()
 
         # Signal Connections
@@ -47,7 +47,7 @@ def main():
 
     app = QApplication(sys.argv)
 
-    font_id = QFontDatabase.addApplicationFont(resource_path("fonts/Jura-VariableFont_wght.ttf"))
+    font_id = QFontDatabase.addApplicationFont(file_processing.resource_path("fonts/Jura-VariableFont_wght.ttf"))
 
     if font_id != -1:
         font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
@@ -55,7 +55,7 @@ def main():
 
     window = CamScammerApp()
     window.setWindowTitle("CamScammer")
-    window.setWindowIcon(QIcon(resource_path("icons/camera.png")))
+    window.setWindowIcon(QIcon(file_processing.resource_path("icons/camera.png")))
     window.show()
 
     sys.exit(app.exec())

@@ -23,9 +23,10 @@ class EditImageWidget(QWidget):
         # UI ELEMENTS
         
         ## Navigations Buttons
-        homebutton =  ImageNavButton('icons/house.png', self.to_home) # !Might Be The Cause Of Unknown Crash
+        homebutton =  ImageNavButton('icons/house.png', self.to_home) 
         exportbutton = ImageNavButton(icon = 'icons/export.png',action = self.export_dialog, direction=Qt.LayoutDirection.RightToLeft , text = "EXPORT", fixedsize=(100,50))
         capturebutton = ImageNavButton('icons/camera.png' , self.to_capture)
+        filebutton = ImageNavButton('icons/image.png', self.parent.landingwidget.handle_import_image)
 
         ## Image Preview Element
 
@@ -41,6 +42,7 @@ class EditImageWidget(QWidget):
         self.navLayout = QHBoxLayout()
         self.navLayout.addWidget(homebutton)
         self.navLayout.addWidget(capturebutton)
+        self.navLayout.addWidget(filebutton)
         self.navLayout.addStretch()
         self.navLayout.addWidget(exportbutton)
         self.navLayout.setAlignment(Qt.AlignmentFlag.AlignTop)

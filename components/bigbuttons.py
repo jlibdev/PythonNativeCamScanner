@@ -1,9 +1,8 @@
 from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget , QLabel, QScrollArea, QHBoxLayout, QSizePolicy
 from PyQt6.QtGui import QIcon, QPixmap , QImage
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from utils import resource_path, cv2_to_QImage
 import cv2
-
+from utilities import file_processing, image_processing
 
 
 def create_big_button(label, icon , action):
@@ -33,7 +32,7 @@ class ImageNavButton(QWidget):
         super().__init__()
         layout = QVBoxLayout(self)
         self.button = QPushButton(text)
-        self.button.setIcon(QIcon(resource_path(icon)))
+        self.button.setIcon(QIcon(file_processing.resource_path(icon)))
         self.button.setIconSize(iconsize)
         self.button.setFixedSize(fixedsize[0] , fixedsize[1])
         self.button.setStyleSheet(stylesheet)
@@ -42,7 +41,7 @@ class ImageNavButton(QWidget):
         self.button.clicked.connect(action)
 
     def set_icon(self, icon):
-        self.button.setIcon(QIcon(resource_path(icon)))
+        self.button.setIcon(QIcon(file_processing.resource_path(icon)))
 
 prev_click = None
 
@@ -56,7 +55,7 @@ class ImageBtn(QWidget):
 
         self.cv_img_orig = cv_img.copy()
 
-        self.q_image = cv2_to_QImage(self.cv_image)
+        self.q_image = image_processing.cv2_to_QImage(self.cv_image)
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -130,7 +129,7 @@ class ImageBtn(QWidget):
             case _:
                 print("Filter Does Not Exist")
 
-        self.q_image = cv2_to_QImage(self.cv_image)
+        self.q_image = image_processing.cv2_to_QImage(self.cv_image)
         pixmap = QPixmap.fromImage(self.q_image)
         pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         self.imglabel.setPixmap(pixmap)

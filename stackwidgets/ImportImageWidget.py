@@ -2,10 +2,9 @@ from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QSizePol
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 from components.bigbuttons import ImageNavButton
-from utilities.image_processing import get_contours
-from utils import cv2_to_pixmap
+from utilities.image_processing import get_contours, cv2_to_pixmap
 from Main import CamScammerApp
-
+import cv2
 
 class ImportImageWidget(QWidget):
     def __init__(self, parent=None):
@@ -62,12 +61,11 @@ class ImportImageWidget(QWidget):
         print("Import Image Widget Mounted")
         self.set_image(imgdir)
         self.parent.setCurrentWidget(self.parent.import_image_widget)
-        print(len(self.contours))
 
     def set_image(self, imagedir):
         self.imagedir = imagedir
         self.orginal_image , self.image , self.contours = get_contours(imagedir)
-
+        self.orginal_image = cv2.cvtColor(self.orginal_image, cv2.COLOR_BGR2RGB)
         scaled_pixmap = QPixmap(cv2_to_pixmap(self.image)).scaled(
                     self.image_holder.width(), 
                     self.image_holder.height(), 

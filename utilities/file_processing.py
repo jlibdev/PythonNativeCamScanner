@@ -85,7 +85,6 @@ def export_to_pdf(image_list, output_pdf=os.path.join(SAVE_PATH, "pdf" , f"CamSc
             temp_filename = f"temp_{idx}.jpg"
             pil_img.save(temp_filename)
 
-    
             orig_width, orig_height = pil_img.size
 
             new_width = pdf_width
