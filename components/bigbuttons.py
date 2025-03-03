@@ -88,13 +88,14 @@ class ImageBtn(QWidget):
     def on_click(self, btn):
         global prev_click  # Access global variable
         
-        if prev_click and prev_click != self:  # Check if there's a previous selection
-            prev_click.setStyleSheet("border: none;")  # Remove border from previous selection
+        if prev_click and prev_click != self and not prev_click.isHidden():  
+            prev_click.setStyleSheet("border: none;")  # Remove border safely
 
-        self.setStyleSheet("border: 3px solid white;")  # Apply border to the new selection (JUS UTRUHA RA DIRI UNSAY GUSTO NIMO NGA TAE)
+        self.setStyleSheet("border: 3px solid white;")  # Apply border to new selection
         prev_click = self  # Update previous selection
 
         btn(self)  # Execute the action
+
 
     def apply_filter(self, filter):
         to_delete = False
@@ -136,13 +137,19 @@ class ImageBtn(QWidget):
         if not to_delete:
             self.on_image_changed.emit()
 
-
     def deleteSelf(self):
+        global prev_click  # Ensure it doesn't reference a deleted widget
+
+        if prev_click == self:
+            prev_click = None  # Reset to avoid crashes
+
         self.on_self_delete.emit()
         self.deleteLater()
         self.hide()
-        self.parentWidget().removed_item()
-        
+
+        if self.parentWidget():
+            self.parentWidget().removed_item()  # Ensure parent exists before calling
+
 
 class ActionsBtn(QWidget):
     def __init__(self, action_name):
