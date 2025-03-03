@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog , QVBoxLayout, QLabel, QPushButton
+from PyQt6.QtWidgets import QDialog , QVBoxLayout, QLabel, QPushButton, QMessageBox 
 from PyQt6.QtGui import QIcon
 from utilities import file_processing
 
@@ -11,6 +11,8 @@ class ExportPopUp(QDialog):
         self.setWindowTitle("Export")
         self.setWindowIcon(QIcon(file_processing.resource_path(r'icons\export.png')))
         self.setFixedSize(300, 150)
+        self.msg = QMessageBox()
+        self.msg.setWindowIcon(QIcon(file_processing.resource_path(r'icons\camera.png')))
 
         layout = QVBoxLayout(self)
 
@@ -32,13 +34,35 @@ class ExportPopUp(QDialog):
         layout.addWidget(close_button)
     
     def export_png(self):
-        file_processing.export_to_img(self.image_list)
+        
+        if file_processing.export_to_img(self.image_list):
+            self.msg.setWindowTitle("Exported Successfully!")
+            self.msg.setText("Images has been exported as PDFs")
+            self.msg.setIcon(QMessageBox.Icon.Information)
+            self.msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        else:
+            self.msg.setWindowTitle("Export Failed!")
+            self.msg.setText("There are no images to export")
+            self.msg.setIcon(QMessageBox.Icon.Warning)
+            self.msg.setStandardButtons(QMessageBox.StandardButton.Close)
+        self.msg.exec()
         self.close()
     
     def export_pdf(self):
-        file_processing.export_to_pdf(self.image_list)
+        if file_processing.export_to_pdf(self.image_list):
+            self.msg.setWindowTitle("Exported Successfully!")
+            self.msg.setText("Images has been exported as PDFs")
+            self.msg.setIcon(QMessageBox.Icon.Information)
+            self.msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        else:
+            self.msg.setWindowTitle("Export Failed!")
+            self.msg.setText("There are no images to export")
+            self.msg.setIcon(QMessageBox.Icon.Warning)
+            self.msg.setStandardButtons(QMessageBox.StandardButton.Close)
+        self.msg.exec()
         self.close()
     
+
     
 
         

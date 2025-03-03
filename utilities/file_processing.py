@@ -103,14 +103,18 @@ def export_to_pdf(image_list, output_pdf=os.path.join(SAVE_PATH, "pdf" , f"CamSc
             os.remove(temp_filename)
 
         c.save()
-        print(f"PDF saved as {output_pdf}")
+        return True
 
     else:
-       print("Error")
+       return False
 
 
 def export_to_img(image_list, img_type="png"):
-    for i in range(len(image_list)):
-            img = cv2.cvtColor(image_list[i].cv_img_orig,cv2.COLOR_BGR2RGB)
-            cv2.imwrite(os.path.join(SAVE_PATH, "images" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.{img_type}") , img)
+    if image_list:
+        for i in range(len(image_list)):
+                img = cv2.cvtColor(image_list[i].cv_img_orig,cv2.COLOR_BGR2RGB)
+                cv2.imwrite(os.path.join(SAVE_PATH, "images" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.{img_type}") , img)
+        return True
+    else:
+        return False
 
