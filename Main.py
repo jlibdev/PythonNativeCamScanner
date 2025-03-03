@@ -15,6 +15,11 @@ class CamScammerApp(QStackedWidget):
         self.capture_widget = CaptureWidget()
         self.edit_image_widget = EditImageWidget()
 
+        # WIDGET INITIALIZATION
+        self.addWidget(self.landingwidget)
+        self.addWidget(self.capture_widget)
+        self.addWidget(self.edit_image_widget)
+
         # WATCHERS
 
         # File Stream Watcher
@@ -22,10 +27,10 @@ class CamScammerApp(QStackedWidget):
         self.file_stream_watcher.start()
         self.file_stream_watcher.file_signal.connect(self.handle_file_event)
 
+        # User Prefs Watcher
+        
 
-        self.addWidget(self.landingwidget)
-        self.addWidget(self.capture_widget)
-        self.addWidget(self.edit_image_widget)
+
         
         # Signal Connections
         self.capture_widget.image_captured.connect(self.edit_image_widget.update_image)
@@ -39,7 +44,7 @@ class CamScammerApp(QStackedWidget):
     def closeEvent(self, a0):
         # Closing Threads
         self.file_stream_watcher.stop()
-        
+
         return super().closeEvent(a0)
 
 def main():
