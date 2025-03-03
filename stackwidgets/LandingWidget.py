@@ -210,6 +210,5 @@ class LandingWidget(QWidget):
                 QMessageBox.critical(self, "Error", "The selected file does not exist!")
                 return
             else:
-                print("Selected Image", file)
-                img = cv2.imread(file)
-                # cv2.imshow("Image" , img)
+                print("Selected Image : ", file)
+                self.parentWidget().import_image_widget.on_mount(file)

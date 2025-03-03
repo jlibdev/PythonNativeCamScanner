@@ -21,6 +21,7 @@ class imageSrollerV(QWidget):
         self.mainlayout.addWidget(item)
         self.height = self.height + self.sizeIncrement
         self.setFixedHeight(self.height)
+        
     def removed_item(self):
          self.height = self.height - self.sizeIncrement
          self.setFixedHeight(self.height)

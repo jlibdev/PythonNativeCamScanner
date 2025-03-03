@@ -9,7 +9,6 @@ import os
 from components.Popups import ExportPopUp
 from components.Scrollers import imageSrollerV
 
-
 class ContoursDialog(QDialog):
     def __init__(self, img, contours, parent=None):
         super().__init__(parent)

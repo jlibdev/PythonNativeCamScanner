@@ -1,6 +1,7 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QStackedWidget , QPushButton
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
+import stackwidgets.ImportImageWidget
 import stackwidgets.LandingWidget
 from stackwidgets.Widgets import CaptureWidget, EditImageWidget
 import treads.Watchers
@@ -16,11 +17,13 @@ class CamScammerApp(QStackedWidget):
         self.landingwidget = stackwidgets.LandingWidget.LandingWidget()
         self.capture_widget = CaptureWidget()
         self.edit_image_widget = EditImageWidget()
+        self.import_image_widget = stackwidgets.ImportImageWidget.ImportImageWidget()
 
         # WIDGET INITIALIZATION
         self.addWidget(self.landingwidget)
         self.addWidget(self.capture_widget)
         self.addWidget(self.edit_image_widget)
+        self.addWidget(self.import_image_widget)
 
         # WATCHERS
 

@@ -71,7 +71,7 @@ import sys
 from PyQt6.QtWidgets import QApplication, QStackedWidget , QPushButton
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
 import stackwidgets.LandingWidget
-from stackwidgets.Widgets import LandingWidget , CaptureWidget, EditImageWidget
+from stackwidgets.Widgets import  CaptureWidget, EditImageWidget
 import treads.Watchers
 from utils import resource_path, save_path
 import treads
@@ -91,7 +91,7 @@ class ImportImageWidget(QWidget):
 
         ## Image Viewer Label
 
-        self.image_viewer_label = QLabel("Image Contour Information")
+        self.image_viewer_label = QLabel("IMAGE CONTOUR INFORMATION")
         self.image_viewer_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         ## Image Viewer
