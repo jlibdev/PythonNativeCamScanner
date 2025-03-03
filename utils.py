@@ -103,7 +103,6 @@ def open_file(file_path):
         print("File not found:", file_path)
 
 def retrieve_img_files():
-
     # Construct paths
     image_camscanner_path = os.path.join(save_path, "images")
 
@@ -220,4 +219,3 @@ def export_to_img(image_list, img_type="png"):
     for i in range(len(image_list)):
             img = cv2.cvtColor(image_list[i].cv_img_orig,cv2.COLOR_BGR2RGB)
             cv2.imwrite(os.path.join(save_path, "images" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.{img_type}") , img)
-            print(f"image saved on ",os.path.join(os.path.expanduser("~"), "Documents", "camscanner_files", "images" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.{img_type}") )
