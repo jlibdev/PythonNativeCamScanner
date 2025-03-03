@@ -1,43 +1,61 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
-from PyQt6.QtCore import Qt
-from stackwidgets.Widgets import LandingWidget , CaptureWidget, EditImageWidget
-from utils import resource_path
+import treads.watchers
+import treads
+from stackwidgets import CaptureWidget, ImportImageWidget , LandingWidget , EditImageWidget
+from utilities import file_processing
 
 class CamScammerApp(QStackedWidget):
+
     def __init__(self):
         super().__init__()
+        # STACKABLE WIDGETS / VIEWS
+        self.landingwidget = LandingWidget.LandingWidget(self)
+        self.capture_widget = CaptureWidget.CaptureWidget(self)
+        self.edit_image_widget = EditImageWidget.EditImageWidget(self)  
+        self.import_image_widget = ImportImageWidget.ImportImageWidget(self)
 
-        # Stackable Widgets
-        self.landingwidget = LandingWidget()
-        self.capture_widget = CaptureWidget()
-        self.edit_image_widget = EditImageWidget()
-
+        # WIDGET INITIALIZATION
         self.addWidget(self.landingwidget)
         self.addWidget(self.capture_widget)
         self.addWidget(self.edit_image_widget)
+        self.addWidget(self.import_image_widget)
+
+        # WATCHERS
+
+        # File Stream Watcher
+        self.file_stream_watcher = treads.watchers.WatcherThread(file_processing.SAVE_PATH)
+        self.file_stream_watcher.start()
 
         # Signal Connections
         self.capture_widget.image_captured.connect(self.edit_image_widget.update_image)
         self.capture_widget.image_captured.connect(lambda: self.setCurrentWidget(self.edit_image_widget))
 
-        self.resize(1280,720)
+        self.landingwidget.switched.connect(self.capture_widget.toggle_camera)
+        self.file_stream_watcher.file_signal.connect(self.landingwidget.handle_file_change)
 
+        self.resize(1280,720)
+    
+    def closeEvent(self, a0):
+        # Closing Threads
+        self.file_stream_watcher.stop()
+
+        return super().closeEvent(a0)
 
 def main():
 
     app = QApplication(sys.argv)
 
-    font_id = QFontDatabase.addApplicationFont(resource_path("fonts/Jura-VariableFont_wght.ttf"))
+    font_id = QFontDatabase.addApplicationFont(file_processing.resource_path("fonts/Jura-VariableFont_wght.ttf"))
 
     if font_id != -1:
         font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
-        app.setFont(QFont(font_family, 12))  
+        app.setFont(QFont(font_family, 12)) 
 
     window = CamScammerApp()
     window.setWindowTitle("CamScammer")
-    window.setWindowIcon(QIcon(resource_path("icons/camera.png")))
+    window.setWindowIcon(QIcon(file_processing.resource_path("icons/camera.png")))
     window.show()
 
     sys.exit(app.exec())

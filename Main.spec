@@ -5,7 +5,10 @@ a = Analysis(
     ['Main.py'],
     pathex=[],
     binaries=[],
-    datas=[('fonts/*', 'fonts'), ('icons/*', 'icons')],
+    datas=[
+        ('fonts', 'fonts'),
+        ('icons', 'icons')
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -16,23 +19,13 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.datas,
-    [],
-    name='Main',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-)
+exe = EXE(pyz,
+          a.scripts,
+          a.binaries,
+          a.zipfiles,
+          a.datas,
+          name='CamScammer',
+          version='version.txt',  # Embed version info
+          icon='icon.ico',
+          upx=True,
+          console=False)
