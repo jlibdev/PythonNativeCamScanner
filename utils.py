@@ -10,14 +10,21 @@ from PIL import Image
 from datetime import date
 import uuid
 
+save_path = os.path.join(os.path.expanduser("~"), "Documents", "CamScanner")
+
 def resource_path(relative_path):
-    """ Get the absolute path to a resource, compatible with PyInstaller. """
     if getattr(sys, 'frozen', False): 
         base_path = sys._MEIPASS 
     else:
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
+
+def clear_layout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
 
 def get_all_pages(frame, pages):
 
@@ -90,11 +97,9 @@ def open_file(file_path):
         print("File not found:", file_path)
 
 def retrieve_img_files():
-    # Get the user's home directory
-    home_dir = os.path.expanduser("~")
 
     # Construct paths
-    image_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "images")
+    image_camscanner_path = os.path.join(save_path, "images")
 
     # Create folder if it doesn’t exist
     os.makedirs(image_camscanner_path, exist_ok=True)
@@ -118,7 +123,7 @@ def retrieve_pdf_files():
     home_dir = os.path.expanduser("~")
 
     # Construct paths
-    pdf_camscanner_path = os.path.join(home_dir, "Documents", "camscanner_files", "pdf")
+    pdf_camscanner_path = os.path.join(save_path, "pdf")
     
     # Create folder if it doesn’t exist
     os.makedirs(pdf_camscanner_path, exist_ok=True)
@@ -169,7 +174,7 @@ def save_to_image(widget):
     for child in widget:
         print(child) 
 
-def export_to_pdf(image_list, output_pdf=os.path.join(os.path.expanduser("~"), "Documents", "camscanner_files", "pdf" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.pdf")):
+def export_to_pdf(image_list, output_pdf=os.path.join(save_path, "pdf" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.pdf")):
     if image_list:
         c = canvas.Canvas(output_pdf, pagesize=letter)
         pdf_width, pdf_height = letter
@@ -208,5 +213,5 @@ def export_to_pdf(image_list, output_pdf=os.path.join(os.path.expanduser("~"), "
 def export_to_img(image_list, img_type="png"):
     for i in range(len(image_list)):
             img = cv2.cvtColor(image_list[i].cv_img_orig,cv2.COLOR_BGR2RGB)
-            cv2.imwrite(os.path.join(os.path.expanduser("~"), "Documents", "camscanner_files", "images" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.{img_type}") , img)
+            cv2.imwrite(os.path.join(save_path, "images" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.{img_type}") , img)
             print(f"image saved on ",os.path.join(os.path.expanduser("~"), "Documents", "camscanner_files", "images" , f"CamScam-{date.today()}-{str(uuid.uuid4())}.{img_type}") )

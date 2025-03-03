@@ -34,6 +34,11 @@ class WatcherThread(QThread):
     def __init__(self, watch_path):
         super().__init__()
         self.watch_path = watch_path
+        if not os.path.exists(watch_path):
+            os.makedirs(watch_path)
+            print(f"Create directory: {watch_path}")
+        else:
+            print(f"Directory : {watch_path}")
         self.running = True
 
     def run(self):
@@ -54,3 +59,6 @@ class WatcherThread(QThread):
         self.running = False
         self.quit()
         self.wait()
+
+    def set_path(self, path):
+        self.watch_path = path

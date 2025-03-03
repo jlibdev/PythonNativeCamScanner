@@ -1,17 +1,19 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QStackedWidget
+from PyQt6.QtWidgets import QApplication, QStackedWidget , QPushButton
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
+import stackwidgets.LandingWidget
 from stackwidgets.Widgets import LandingWidget , CaptureWidget, EditImageWidget
 import treads.Watchers
-from utils import resource_path
+from utils import resource_path, save_path
 import treads
+import stackwidgets
 
 class CamScammerApp(QStackedWidget):
     def __init__(self):
         super().__init__()
 
         # STACKABLE WIDGETS / VIEWS
-        self.landingwidget = LandingWidget()
+        self.landingwidget = stackwidgets.LandingWidget.LandingWidget()
         self.capture_widget = CaptureWidget()
         self.edit_image_widget = EditImageWidget()
 
@@ -23,23 +25,17 @@ class CamScammerApp(QStackedWidget):
         # WATCHERS
 
         # File Stream Watcher
-        self.file_stream_watcher = treads.Watchers.WatcherThread(r'C:\Users\Joshua Libando\Dropbox\PC\Documents\camscanner_files')
+        self.file_stream_watcher = treads.Watchers.WatcherThread(save_path)
         self.file_stream_watcher.start()
-        self.file_stream_watcher.file_signal.connect(self.handle_file_event)
 
-        # User Prefs Watcher
-        
-
-
-        
         # Signal Connections
         self.capture_widget.image_captured.connect(self.edit_image_widget.update_image)
         self.capture_widget.image_captured.connect(lambda: self.setCurrentWidget(self.edit_image_widget))
-        self.landingwidget.switched.connect(self.capture_widget.toggle_camera)
-        self.resize(1280,720)
 
-    def handle_file_event(self , message):
-        print(message)
+        self.landingwidget.switched.connect(self.capture_widget.toggle_camera)
+        self.file_stream_watcher.file_signal.connect(self.landingwidget.handle_file_change)
+
+        self.resize(1280,720)
     
     def closeEvent(self, a0):
         # Closing Threads
