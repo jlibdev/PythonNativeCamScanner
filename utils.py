@@ -80,6 +80,11 @@ def get_all_pages(frame, pages):
             # x, y, w, h = cv2.boundingRect(approx)
             pages.append(approx)
 
+    print("Pages detected:", len(pages))  # Debugging
+    if not pages:
+        print("⚠️ No valid pages detected!")
+ 
+
 def cv2_to_pixmap(cv_image):
     height, width, channel = cv_image.shape
     bytes_per_line = channel * width

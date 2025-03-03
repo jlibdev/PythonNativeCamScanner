@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget , QLabel, QScrollArea
+from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget , QLabel, QScrollArea, QHBoxLayout, QSizePolicy
 from PyQt6.QtGui import QIcon, QPixmap , QImage
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from utils import resource_path, cv2_to_QImage
@@ -12,6 +12,7 @@ def create_big_button(label, icon , action):
     button.setText(label)
     button.setIconSize(QSize(30,30))
     button.clicked.connect(action)
+    button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
     # Use margin instead of padding
     button.setStyleSheet("""
@@ -70,7 +71,7 @@ class ImageBtn(QWidget):
         self.imglabel.setPixmap(pixmap)
 
         self.button = QPushButton(self)
-        self.button.setStyleSheet("background-color: black; border-radius: 10px;")
+        self.button.setStyleSheet("background-color: black; border-radius: 0px;")
         self.button.clicked.connect(lambda: self.on_click(btn_action))
         self.button.setFixedSize(self.imglabel.size())
 
@@ -110,7 +111,7 @@ class ImageBtn(QWidget):
             case "Rotate-CCW":
                 self.cv_img_orig = cv2.rotate(self.cv_img_orig, cv2.ROTATE_90_COUNTERCLOCKWISE)
                 self.cv_image = cv2.rotate(self.cv_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            case "Rotate-CW":
+            case "Rotate": # from Rotate-CW
                 self.cv_img_orig = cv2.rotate(self.cv_img_orig, cv2.ROTATE_90_CLOCKWISE)
                 self.cv_image = cv2.rotate(self.cv_image, cv2.ROTATE_90_CLOCKWISE)
             case "Delete":
@@ -139,9 +140,8 @@ class ActionsBtn(QWidget):
         super().__init__()
         self.action_name = action_name
         self.selected = None
-        self.setFixedSize(80, 80)
-        self.setStyleSheet("background-color: gray;")
-        layout = QVBoxLayout(self)
+        self.setFixedSize(100, 50)
+        layout = QHBoxLayout(self)
         self.btn = QPushButton(action_name, self)  # Set text on button
         self.btn.setFixedSize(self.size())
         layout.addWidget(self.btn)
