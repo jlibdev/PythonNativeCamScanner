@@ -44,13 +44,14 @@ class ImageNavButton(QWidget):
     def set_icon(self, icon):
         self.button.setIcon(QIcon(resource_path(icon)))
 
+prev_click = None
+
 class ImageBtn(QWidget):
     on_image_changed = pyqtSignal()
     on_self_delete = pyqtSignal()
     def __init__(self , cv_img, btn_action ):
         super().__init__()
         self.setFixedSize(50,76)
-
         self.cv_image = cv_img
 
         self.cv_img_orig = cv_img.copy()
@@ -61,7 +62,7 @@ class ImageBtn(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.imglabel = QLabel()
-        self.imglabel.setStyleSheet("background-color: black;border-radius: 10px;")
+        self.imglabel.setStyleSheet("background-color: black;border-radius: 0px;")
         self.imglabel.setFixedSize(self.size())
         self.imglabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -85,7 +86,16 @@ class ImageBtn(QWidget):
         layout.addWidget(self.button)
     
     def on_click(self, btn):
-        btn(self)
+        global prev_click  # Access global variable
+        
+        if prev_click and prev_click != self and not prev_click.isHidden():  
+            prev_click.setStyleSheet("border: none;")  # Remove border safely
+
+        self.setStyleSheet("border: 3px solid white;")  # Apply border to new selection
+        prev_click = self  # Update previous selection
+
+        btn(self)  # Execute the action
+
 
     def apply_filter(self, filter):
         to_delete = False
@@ -127,13 +137,19 @@ class ImageBtn(QWidget):
         if not to_delete:
             self.on_image_changed.emit()
 
-
     def deleteSelf(self):
+        global prev_click  # Ensure it doesn't reference a deleted widget
+
+        if prev_click == self:
+            prev_click = None  # Reset to avoid crashes
+
         self.on_self_delete.emit()
         self.deleteLater()
         self.hide()
-        self.parentWidget().removed_item()
-        
+
+        if self.parentWidget():
+            self.parentWidget().removed_item()  # Ensure parent exists before calling
+
 
 class ActionsBtn(QWidget):
     def __init__(self, action_name):

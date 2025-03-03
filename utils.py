@@ -25,6 +25,7 @@ def clear_layout(self, layout):
             item = layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
+                
 
 def get_all_pages(frame, pages):
 
