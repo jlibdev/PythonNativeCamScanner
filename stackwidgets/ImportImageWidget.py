@@ -60,6 +60,7 @@ class ImportImageWidget(QWidget):
         print("Import Image Widget Mounted")
         self.set_image(imgdir)
         self.parentWidget().setCurrentWidget(self.parentWidget().import_image_widget)
+        print(len(self.contours))
 
     def set_image(self, imagedir):
         self.imagedir = imagedir

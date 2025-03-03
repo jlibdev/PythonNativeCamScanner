@@ -74,7 +74,7 @@ def get_all_pages(frame, pages):
             continue
 
         perimeter = cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, 0.05 * perimeter, True)
+        approx = cv2.approxPolyDP(cnt, 0.02 * perimeter, True)
 
         if len(approx) == 4 and cv2.isContourConvex(approx):  # Ensure it's convex
             # x, y, w, h = cv2.boundingRect(approx)
