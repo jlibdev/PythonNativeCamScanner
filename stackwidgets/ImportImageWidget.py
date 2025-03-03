@@ -3,6 +3,9 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 import cv2
 from components.bigbuttons import ImageNavButton
+import utilities
+from utilities.image_processing import get_contours_sir
+
 
 class ImportImageWidget(QWidget):
     def __init__(self):
@@ -54,6 +57,9 @@ class ImportImageWidget(QWidget):
          print("Import Image Widget Mounted")
          self.set_image(imgdir)
          self.parentWidget().setCurrentWidget(self.parentWidget().import_image_widget)
+         image_orig , image , contours = get_contours_sir(imgdir)
+         cv2.imshow("Drawn", image)
+
     
     def set_image(self, imagedir):
         self.image = imagedir
@@ -73,6 +79,13 @@ class ImportImageWidget(QWidget):
     
     def resizeEvent(self, a0):
         self.update()
+        scaled_pixmap = QPixmap(self.image).scaled(
+                    self.image_holder.width(), 
+                    self.image_holder.height(), 
+                    Qt.AspectRatioMode.KeepAspectRatio, 
+                    Qt.TransformationMode.SmoothTransformation
+                )
+        self.image_holder.setPixmap(scaled_pixmap)
         return super().resizeEvent(a0)
     
     def on_home_navigation_pressed(self):

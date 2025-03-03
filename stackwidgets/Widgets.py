@@ -311,9 +311,6 @@ class EditImageWidget(QWidget):
         
     def update_image(self, pages, frame):
         self.warpedPages.clear()
-        if not pages:
-            print("Error: No valid pages received")
-            return
         for page in pages:
             if len(page) != 4:
                 print("Skipping page: Expected 4 corners, found", len(page))

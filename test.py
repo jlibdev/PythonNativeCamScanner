@@ -77,92 +77,53 @@ from utils import resource_path, save_path
 import treads
 import stackwidgets
 
-
-
-class ImportImageWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        # Variables
-
-        self.image = r'icons\noimage.png'
-
-        # UI ELEMENTS
-
-        ## Image Viewer Label
-
-        self.image_viewer_label = QLabel("IMAGE CONTOUR INFORMATION")
-        self.image_viewer_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        ## Image Viewer
-        self.image_holder = QLabel()
-        self.image_holder.setPixmap(QPixmap(self.image))
-        self.image_holder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image_holder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image_holder.setStyleSheet("background-color: black;") 
-        self.image_holder.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding))
-
-        # LAYOUTS
-
-        # Navigation Layout
-
-        self.navigation_layout = QHBoxLayout()
-        self.navigation_layout.addWidget(ImageNavButton(r"icons\house.png",self.on_home_navigation_pressed))
-        self.navigation_layout.addStretch()
-        self.navigation_layout.addWidget(ImageNavButton(r"icons\chev-r.png", self.on_continue_navigation_pressed , direction=Qt.LayoutDirection.RightToLeft , text = "CONTINUE", fixedsize=(150,50)))
-
-        # Main Layout
-        self.mainlayout = QVBoxLayout()
-        self.mainlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.mainlayout.addLayout(self.navigation_layout)
-        self.mainlayout.addWidget(self.image_viewer_label)
-        self.mainlayout.addWidget(self.image_holder)
-
-        # SIGNALS
-
-        # OTHERS
-
-        self.setLayout(self.mainlayout)
-        self.resize(1280, 720)
-    
-    def on_mount(self, imgdir):
-         print("Import Image Widget Mounted")
-         self.set_image(imgdir)
-         self.parentWidget().setCurrentWidget(self.parentWidget().import_image_widget())
-    
-    def set_image(self, imagedir):
-        self.image = imagedir
-        self.image_holder.setPixmap(QPixmap(self.image))
-    
-    def get_cv2_image(self):
-        if self.image is not None:
-            return cv2.imread(self.image)
-        else:
-            return None
-    
-    def resizeEvent(self, a0):
-        self.update()
-        return super().resizeEvent(a0)
-    
-    def on_home_navigation_pressed(self):
-        print("Import Image Widget : Returning to Landing Page")
         
+# app = QApplication(sys.argv)
 
-    def on_continue_navigation_pressed(self):
-         print("Import Image Widget : Proceeding to Edit Image Page")
-         
-        
-app = QApplication(sys.argv)
+# font_id = QFontDatabase.addApplicationFont(resource_path("fonts/Jura-VariableFont_wght.ttf"))
 
-font_id = QFontDatabase.addApplicationFont(resource_path("fonts/Jura-VariableFont_wght.ttf"))
+# if font_id != -1:
+#         font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+#         app.setFont(QFont(font_family, 12)) 
 
-if font_id != -1:
-        font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
-        app.setFont(QFont(font_family, 12)) 
-
-window = ImportImageWidget()
+# window = ImportImageWidget()
 
 
-window.show()
-sys.exit(app.exec())
+# window.show()
+# sys.exit(app.exec())
 
+
+
+import cv2
+import numpy as np
+from skimage.filters import threshold_local
+
+# Load image
+image = cv2.imread(r"C:\Users\Joshua Libando\Dropbox\PC\Documents\IMG20240314140042.jpg")
+
+# Convert to HSV and extract the Value (V) channel
+V = cv2.split(cv2.cvtColor(image, cv2.COLOR_BGR2HSV))[2]
+
+# Apply adaptive thresholding using skimage
+T = threshold_local(V, 25, offset=15, method="gaussian")
+thresh = (V > T).astype("uint8") * 255  # Convert to binary image
+
+# Find contours
+contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# Ensure at least one contour is found
+if contours:
+    # Get the largest contour by area
+    largest_contour = max(contours, key=cv2.contourArea)
+
+    # Draw the largest contour on the original image
+    contour_img = image.copy()
+    cv2.drawContours(contour_img, [largest_contour], -1, (0, 255, 0), 2)  # Green contour
+
+    # Display results
+    cv2.imshow("Thresholded", thresh)
+    cv2.imshow("Largest Contour", contour_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+else:
+    print("No contours found!")

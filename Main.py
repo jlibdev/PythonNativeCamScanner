@@ -12,7 +12,6 @@ import stackwidgets
 class CamScammerApp(QStackedWidget):
     def __init__(self):
         super().__init__()
-
         # STACKABLE WIDGETS / VIEWS
         self.landingwidget = stackwidgets.LandingWidget.LandingWidget()
         self.capture_widget = CaptureWidget()

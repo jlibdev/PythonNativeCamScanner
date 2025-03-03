@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton, QScrollArea , QFileDialog, QMessageBox
 from components.bigbuttons import create_big_button
 from PyQt6.QtCore import Qt , QTimer , pyqtSignal, Qt
-import cv2
 from utils import resource_path , retrieve_img_files, retrieve_pdf_files, open_file
 import os
 
