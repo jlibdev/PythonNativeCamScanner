@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea , QFileDialog, QMessageBox
+from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QPushButton , QSizePolicy , QScrollArea , QFileDialog, QMessageBox, QDialog
 from components.bigbuttons import create_big_button, ImageNavButton, ImageBtn , ActionsBtn
 from PyQt6.QtGui import QIcon , QImage , QPixmap
-from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal, Qt, QThread 
+from PyQt6.QtCore import Qt , QSize , QTimer , pyqtSignal, Qt, QThread
 import cv2
 import numpy as np
 from utils import resource_path , get_all_pages, retrieve_img_files, retrieve_pdf_files, open_file , clear_widget 
@@ -40,6 +40,7 @@ class LandingWidget(QWidget):
         self.watch_path = os.path.join(home_dir, "Documents", "camscanner_files")
         self.init_ui()
         self.start_watcher()
+        self.edit_image_widget = EditImageWidget()
 
     def init_ui(self):
 
@@ -223,16 +224,97 @@ class LandingWidget(QWidget):
     def handle_file_change(self, message):
         QTimer.singleShot(0, self.refresh_file_lists)
 
-    def handle_import_image(self):
-        file,_ = QFileDialog.getOpenFileName(self,"Select an Image", "", "Images (*.png *.jpg .*jpeg)")
+
+    # note ( ang naay #--- mao na akong mga na hilabtan or nadungag)
+    def handle_import_image(self): #------------------------------  na update ko ni 
+        file, _ = QFileDialog.getOpenFileName(self, "Select an Image", "", "Images (*.png *.jpg *.jpeg)")
         if file:
-            if not os.path.exists(file):  # Check if file exists
+            if not os.path.exists(file):
                 QMessageBox.critical(self, "Error", "The selected file does not exist!")
                 return
+
+            print("Selected Image", file)
+            img = cv2.imread(file)
+            copy_img = img.copy()
+            self.pages = []
+
+            get_all_pages(copy_img, self.pages)
+            print("Detected pages:", len(self.pages))
+
+            if not self.pages:
+                QMessageBox.information(self, "No Contours", "No valid contours detected.")
+                return
+
+            accepted_contours = []
+
+            # Loop through each contour and ask user for confirmation
+            for contour in self.pages:
+                dialog = ContoursDialog(copy_img, [contour], self)  # Show only one contour
+                result = dialog.exec()
+
+                if result == QDialog.DialogCode.Accepted:
+                    accepted_contours.append(contour)  # Store only accepted contours
+            
+            # Process only accepted contours
+            if accepted_contours:
+                # Emit the contours signal to send them to EditImageWidget
+                self.edit_image_widget.contours_received.emit(accepted_contours, copy_img)
+
             else:
-                print("Selected Image", file)
-                img = cv2.imread(file)
-                # cv2.imshow("Image" , img)
+                print("No contours were accepted.")
+
+
+
+# ---------------------------------------------------------------- KYR  -----------------------------
+
+class ContoursDialog(QDialog):
+    def __init__(self, img, contours, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Confirm Contours")
+        self.setFixedSize(600, 400)
+        self.contours = contours
+
+        # Make a copy of the image and draw only the current contour
+        img_with_contour = img.copy()
+        cv2.drawContours(img_with_contour, contours, -1, (0, 255, 0), 2)  # Green outline
+
+        # Convert OpenCV image to QPixmap for display
+        height, width, ch = img_with_contour.shape
+        bytes_per_line = ch * width
+        q_image = QImage(img_with_contour.data, width, height, bytes_per_line, QImage.Format.Format_RGB888).rgbSwapped()
+        pixmap = QPixmap.fromImage(q_image)
+
+        # Create UI elements
+        layout = QVBoxLayout()
+        label = QLabel()
+
+        # Get the available size within the layout
+        available_width = self.width() - 20  # Adjust padding if necessary
+        available_height = self.height() - 100  # Leave space for buttons
+
+        # Scale image to fit inside the available space while keeping the aspect ratio
+        scaled_pixmap = pixmap.scaled(available_width, available_height, Qt.AspectRatioMode.KeepAspectRatio)
+        label.setPixmap(scaled_pixmap)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(label)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        accept_btn = QPushButton("Accept")
+        reject_btn = QPushButton("Reject")
+
+        button_layout.addWidget(accept_btn)
+        button_layout.addWidget(reject_btn)
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+        # Connect button signals
+        accept_btn.clicked.connect(self.accept)
+        reject_btn.clicked.connect(self.reject)
+
+# ------------------------------------------------------------------------------------------------    
             
 class CaptureWidget(QWidget):
     image_captured = pyqtSignal(object , object)
@@ -382,10 +464,17 @@ class CaptureWidget(QWidget):
         event.accept()
 
 class EditImageWidget(QWidget):
+
+    contours_received = pyqtSignal(list, np.ndarray) #------------------------------ 
+
     def __init__(self):
         super().__init__()
 
         self.warpedPages = []
+
+        # Connect the signal to a method
+        self.contours_received.connect(self.update_image) #------------------------------ 
+
 
         self.selected = None
 
@@ -400,7 +489,6 @@ class EditImageWidget(QWidget):
         # Capture Button
 
         capturebutton = ImageNavButton('icons\scan.png' , self.to_capture)
-
         self.q_imaage = None
 
         # LAYOUTS
@@ -497,6 +585,7 @@ class EditImageWidget(QWidget):
 
         self.display_image(frame)
     
+
     def order_corners(self, corners):
         corners = corners.reshape(4, 2)
 
