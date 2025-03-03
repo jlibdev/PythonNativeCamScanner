@@ -1,15 +1,17 @@
 from PyQt6.QtWidgets import QWidget, QHBoxLayout , QVBoxLayout, QLabel, QSizePolicy
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
-import cv2
 from components.bigbuttons import ImageNavButton
 from utilities.image_processing import get_contours
 from utils import cv2_to_pixmap
+from Main import CamScammerApp
 
 
 class ImportImageWidget(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.parent: CamScammerApp = parent
 
         # Variables
 
@@ -59,7 +61,7 @@ class ImportImageWidget(QWidget):
     def on_mount(self, imgdir):
         print("Import Image Widget Mounted")
         self.set_image(imgdir)
-        self.parentWidget().setCurrentWidget(self.parentWidget().import_image_widget)
+        self.parent.setCurrentWidget(self.parent.import_image_widget)
         print(len(self.contours))
 
     def set_image(self, imagedir):
@@ -81,11 +83,10 @@ class ImportImageWidget(QWidget):
     
     def on_home_navigation_pressed(self):
         print("Import Image Widget : Returning to Landing Page")
-        self.parentWidget().setCurrentWidget(self.parentWidget().landingwidget)
+        self.parent.setCurrentWidget(self.parent.landingwidget)
         
-
     def on_continue_navigation_pressed(self):
-          self.parentWidget().edit_image_widget.update_image(self.contours, self.orginal_image)
-          self.parentWidget().setCurrentWidget(self.parentWidget().edit_image_widget)
+          self.parent.edit_image_widget.update_image(self.contours, self.orginal_image)
+          self.parent.setCurrentWidget(self.parent.edit_image_widget)
          
 

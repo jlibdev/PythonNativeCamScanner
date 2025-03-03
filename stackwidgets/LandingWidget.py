@@ -4,10 +4,13 @@ from PyQt6.QtCore import Qt , QTimer , pyqtSignal, Qt
 from utils import resource_path , retrieve_img_files, retrieve_pdf_files, open_file
 import os
 
+
 class LandingWidget(QWidget):
     switched = pyqtSignal()
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        from Main import CamScammerApp
+        self.parent: CamScammerApp = parent
         self.img_buttons = {}
         self.pdf_buttons = {}
         self.init_ui()
@@ -124,11 +127,11 @@ class LandingWidget(QWidget):
         self.refresh_file_lists()
     def to_import(self):
         print("Landing Page : Switching to Import Images Widget")
-        self.parentWidget().setCurrentIndex(1)
+        self.parent.setCurrentWidget(self.parent.import_image_widget)
 
     def to_capture(self):
         print("Landing Page : Switching to Capture Images Widget")
-        self.parentWidget().setCurrentIndex(1)
+        self.parent.setCurrentWidget(self.parent.capture_widget)
         self.switched.emit()
 
     def refresh_file_lists(self):
@@ -210,4 +213,4 @@ class LandingWidget(QWidget):
                 return
             else:
                 print("Selected Image : ", file)
-                self.parentWidget().import_image_widget.on_mount(file)
+                self.parent.import_image_widget.on_mount(file)

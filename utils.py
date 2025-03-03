@@ -29,41 +29,10 @@ def clear_layout(self, layout):
 
 def get_all_pages(frame, pages):
 
-    # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    
-    # _, th2 = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-    # edges = cv2.Canny(th2, 50, 150)
-    # closing = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
-    # kernel = np.ones((3,3),np.uint8)
-    # dilate = cv2.dilate(edges, kernel, iterations=1)
-
-    # Convert to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    # Apply Canny edge detection directly (skip Otsu)
     edges = cv2.Canny(gray, 50, 150)
-
-    # Apply morphological closing (optional)
     kernel = np.ones((3,3),np.uint8)
     closing = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
-    
-
-    # frame = cv2.resize(frame, (widthImg, heightImg))  # RESIZE IMAGE
-    # imgGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # CONVERT IMAGE TO GRAY SCALE
-    # imgBlur = cv2.GaussianBlur(imgGray, (5, 5), 1)  # ADD GAUSSIAN BLUR
-    # imgThreshold = cv2.Canny(imgBlur, 255, 255)  # APPLY CANNY BLUR
-    # kernel = np.ones((5, 5), np.uint8)
-    # imgDial = cv2.dilate(imgThreshold, kernel, iterations=1)  # APPLY DILATION
-    # imgThreshold = cv2.erode(imgDial, kernel, iterations=1)  # APPLY EROSION
-    # closing = cv2.morphologyEx(imgThreshold, cv2.MORPH_CLOSE, kernel)
-
-    # thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-    #                            cv2.THRESH_BINARY, 11, 2)
-    # kernel = np.ones((5,5), np.uint8)
-    # closing = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-    # dilated = cv2.dilate(closing, kernel, iterations=2)
-
     contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     sorted_contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
@@ -77,11 +46,10 @@ def get_all_pages(frame, pages):
         perimeter = cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt, 0.02 * perimeter, True)
 
-        if len(approx) == 4 and cv2.isContourConvex(approx):  # Ensure it's convex
-            # x, y, w, h = cv2.boundingRect(approx)
+        if len(approx) == 4 and cv2.isContourConvex(approx):
             pages.append(approx)
 
-    print("Pages detected:", len(pages))  # Debugging
+    print("Pages detected:", len(pages))
     if not pages:
         print("⚠️ No valid pages detected!")
  

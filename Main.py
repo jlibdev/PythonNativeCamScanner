@@ -1,22 +1,20 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QStackedWidget , QPushButton
+from PyQt6.QtWidgets import QApplication, QStackedWidget
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
-import stackwidgets.ImportImageWidget
-import stackwidgets.LandingWidget
-from stackwidgets.Widgets import CaptureWidget, EditImageWidget
-import treads.Watchers
+import treads.watchers
 from utils import resource_path, save_path
 import treads
-import stackwidgets
+from stackwidgets import CaptureWidget, ImportImageWidget , LandingWidget , EditImageWidget
 
 class CamScammerApp(QStackedWidget):
+
     def __init__(self):
         super().__init__()
         # STACKABLE WIDGETS / VIEWS
-        self.landingwidget = stackwidgets.LandingWidget.LandingWidget()
-        self.capture_widget = CaptureWidget()
-        self.edit_image_widget = EditImageWidget()
-        self.import_image_widget = stackwidgets.ImportImageWidget.ImportImageWidget()
+        self.landingwidget = LandingWidget.LandingWidget(self)
+        self.capture_widget = CaptureWidget.CaptureWidget(self)
+        self.edit_image_widget = EditImageWidget.EditImageWidget(self)  
+        self.import_image_widget = ImportImageWidget.ImportImageWidget(self)
 
         # WIDGET INITIALIZATION
         self.addWidget(self.landingwidget)
@@ -27,7 +25,7 @@ class CamScammerApp(QStackedWidget):
         # WATCHERS
 
         # File Stream Watcher
-        self.file_stream_watcher = treads.Watchers.WatcherThread(save_path)
+        self.file_stream_watcher = treads.watchers.WatcherThread(save_path)
         self.file_stream_watcher.start()
 
         # Signal Connections
