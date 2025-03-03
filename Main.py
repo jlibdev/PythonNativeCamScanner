@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QStackedWidget , QPushButton
+from PyQt6.QtWidgets import QApplication, QStackedWidget
 from PyQt6.QtGui import QFontDatabase , QFont, QIcon
 import stackwidgets.LandingWidget
 from stackwidgets.Widgets import CaptureWidget, EditImageWidget
