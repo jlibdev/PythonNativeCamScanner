@@ -3,8 +3,8 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 import cv2
 from components.bigbuttons import ImageNavButton
-import utilities
-from utilities.image_processing import get_contours_sir
+from utilities.image_processing import get_contours
+from utils import cv2_to_pixmap
 
 
 class ImportImageWidget(QWidget):
@@ -13,7 +13,10 @@ class ImportImageWidget(QWidget):
 
         # Variables
 
-        self.image = r'icons\noimage.png'
+        self.imagedir = r'icons\noimage.png'
+        self.orginal_image = None
+        self.image = None
+        self.contours = None
 
         # UI ELEMENTS
 
@@ -24,7 +27,7 @@ class ImportImageWidget(QWidget):
 
         ## Image Viewer
         self.image_holder = QLabel()
-        self.image_holder.setPixmap(QPixmap(self.image))
+        self.image_holder.setPixmap(QPixmap(self.imagedir))
         self.image_holder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image_holder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image_holder.setStyleSheet("background-color: black;") 
@@ -54,38 +57,25 @@ class ImportImageWidget(QWidget):
         self.resize(1280, 720)
     
     def on_mount(self, imgdir):
-         print("Import Image Widget Mounted")
-         self.set_image(imgdir)
-         self.parentWidget().setCurrentWidget(self.parentWidget().import_image_widget)
-         image_orig , image , contours = get_contours_sir(imgdir)
-         cv2.imshow("Drawn", image)
+        print("Import Image Widget Mounted")
+        self.set_image(imgdir)
+        self.parentWidget().setCurrentWidget(self.parentWidget().import_image_widget)
 
-    
     def set_image(self, imagedir):
-        self.image = imagedir
-        scaled_pixmap = QPixmap(imagedir).scaled(
+        self.imagedir = imagedir
+        self.orginal_image , self.image , self.contours = get_contours(imagedir)
+
+        scaled_pixmap = QPixmap(cv2_to_pixmap(self.image)).scaled(
                     self.image_holder.width(), 
                     self.image_holder.height(), 
                     Qt.AspectRatioMode.KeepAspectRatio, 
                     Qt.TransformationMode.SmoothTransformation
                 )
         self.image_holder.setPixmap(scaled_pixmap)
-    
-    def get_cv2_image(self):
-        if self.image is not None:
-            return cv2.imread(self.image)
-        else:
-            return None
     
     def resizeEvent(self, a0):
         self.update()
-        scaled_pixmap = QPixmap(self.image).scaled(
-                    self.image_holder.width(), 
-                    self.image_holder.height(), 
-                    Qt.AspectRatioMode.KeepAspectRatio, 
-                    Qt.TransformationMode.SmoothTransformation
-                )
-        self.image_holder.setPixmap(scaled_pixmap)
+        self.set_image(self.imagedir)
         return super().resizeEvent(a0)
     
     def on_home_navigation_pressed(self):
@@ -94,6 +84,7 @@ class ImportImageWidget(QWidget):
         
 
     def on_continue_navigation_pressed(self):
-         print("Import Image Widget : Proceeding to Edit Image Page")
+          self.parentWidget().edit_image_widget.update_image(self.contours, self.orginal_image)
+          self.parentWidget().setCurrentWidget(self.parentWidget().edit_image_widget)
          
 
